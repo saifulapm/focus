@@ -75,8 +75,8 @@ Before starting work, classify the task. This determines your process.
 ### LARGE
 **Signals:** 10+ files, architectural decisions, cross-cutting concerns, needs research. Database migration, new subsystem, major refactor.
 **Process:**
-1. **Ask 3-5 clarifying questions** — one at a time. Focus on: purpose, constraints, preferences, trade-offs. If the user's request is already specific, skip to step 2.
-2. **Capture preferences** (first time only): Ask about coding style, naming conventions, error handling philosophy, testing preferences. Save to memory.md under Project Context so this persists across sessions.
+1. **Ask 3-5 clarifying questions** — one at a time. Focus on: purpose, constraints, preferences, trade-offs. If the user's request is already specific, skip to step 3.
+2. **Capture preferences** (if not already in memory.md): Ask about coding style, naming conventions, error handling philosophy, testing preferences. Save to memory.md under Project Context so this persists across sessions.
 3. **Research the codebase:**
    - Read existing code in affected areas
    - Identify patterns, conventions, dependencies
