@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start\"",
+            "async": false
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash|Read|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .focus/plan.md ]; then head -20 .focus/plan.md 2>/dev/null; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -f .focus/plan.md ]; then incomplete=$(grep -c '^- \\[ \\]' .focus/plan.md 2>/dev/null || echo 0); if [ \"$incomplete\" -gt 0 ]; then echo \"[focus] WARNING: $incomplete unchecked phases in plan.md. Verify all work is complete before stopping.\"; fi; fi; if [ -f .focus/memory.md ]; then age=$(($(date +%s) - $(stat -f %m .focus/memory.md 2>/dev/null || stat -c %Y .focus/memory.md 2>/dev/null || echo 0))); if [ \"$age\" -gt 120 ]; then echo '[focus] Reminder: Update .focus/memory.md with session summary before stopping.'; fi; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

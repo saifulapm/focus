@@ -1,0 +1,6 @@
+# Focus working files — plan and log are temporary
+plan.md
+log.md
+
+# Memory is committed to git (cross-session persistence)
+# Do NOT ignore memory.md
