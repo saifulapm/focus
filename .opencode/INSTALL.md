@@ -6,7 +6,7 @@ Add Focus to the `plugin` array in your `opencode.json` (global or project-level
 
 ```json
 {
-  "plugin": ["focus@git+https://github.com/user/focus.git"]
+  "plugin": ["focus@git+https://github.com/saifulapm/focus.git"]
 }
 ```
 
@@ -31,7 +31,7 @@ To pin a specific version:
 
 ```json
 {
-  "plugin": ["focus@git+https://github.com/user/focus.git#v1.0.0"]
+  "plugin": ["focus@git+https://github.com/saifulapm/focus.git#v1.0.0"]
 }
 ```
 

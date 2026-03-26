@@ -23,14 +23,14 @@ Focus makes AI coding agents reliably better by solving 5 problems:
 /plugin install focus
 
 # Manual install
-git clone https://github.com/user/focus.git /tmp/focus
+git clone https://github.com/saifulapm/focus.git /tmp/focus
 bash /tmp/focus/skills/focus/scripts/install.sh
 ```
 
 ### Cursor
 
 ```bash
-git clone https://github.com/user/focus.git /tmp/focus
+git clone https://github.com/saifulapm/focus.git /tmp/focus
 bash /tmp/focus/skills/focus/scripts/install.sh
 ```
 
@@ -39,7 +39,7 @@ The installer auto-detects Cursor and installs to `~/.cursor/skills/focus/`.
 ### Codex
 
 ```bash
-git clone https://github.com/user/focus.git ~/.codex/focus
+git clone https://github.com/saifulapm/focus.git ~/.codex/focus
 mkdir -p ~/.agents/skills
 ln -s ~/.codex/focus/skills ~/.agents/skills/focus
 ```
@@ -52,7 +52,7 @@ Add to your `opencode.json`:
 
 ```json
 {
-  "plugin": ["focus@git+https://github.com/user/focus.git"]
+  "plugin": ["focus@git+https://github.com/saifulapm/focus.git"]
 }
 ```
 
@@ -61,7 +61,7 @@ Restart OpenCode. See [.opencode/INSTALL.md](.opencode/INSTALL.md) for details.
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/user/focus
+gemini extensions install https://github.com/saifulapm/focus
 ```
 
 Or manually copy `GEMINI.md` + `gemini-extension.json` to `~/.gemini/extensions/focus/`.

@@ -6,7 +6,7 @@ Focus uses Codex's native skill discovery. Clone and symlink.
 
 1. **Clone the Focus repository:**
    ```bash
-   git clone https://github.com/user/focus.git ~/.codex/focus
+   git clone https://github.com/saifulapm/focus.git ~/.codex/focus
    ```
 
 2. **Create the skills symlink:**
