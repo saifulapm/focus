@@ -434,6 +434,7 @@ After completing a LARGE task, append to memory.md:
 
 ## Anti-Patterns
 
+- Do NOT use Claude Code's built-in plan mode (EnterPlanMode). Write plans directly to `.focus/plan.md` using the templates above. Focus manages its own planning.
 - Do NOT create plan.md for trivial/small tasks.
 - Do NOT ask the human for approval on obvious changes.
 - Do NOT retry a failed approach without logging what failed first.
