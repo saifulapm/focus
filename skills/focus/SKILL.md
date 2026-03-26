@@ -1,12 +1,12 @@
 ---
 name: focus
-description: "Use when working on any coding task. Adaptive process that scales from trivial fixes to large features. Provides context persistence, cross-session memory, failure handling, and human steering."
+description: "ALWAYS use this skill before starting ANY coding task — bug fix, feature, refactor, or any code change. Classifies task complexity, creates plans, tracks progress, handles failures, and manages cross-session memory."
 user-invocable: true
 hooks:
   UserPromptSubmit:
     - hooks:
         - type: command
-          command: "echo '[focus] Classify this task: TRIVIAL / SMALL / MEDIUM / LARGE. Follow Focus skill instructions.'; if [ -f .focus/memory.md ]; then echo ''; echo '=== [focus] Session Memory ==='; sed -n '/^## Last Session/,/^## /p' .focus/memory.md | head -15; echo ''; fi; if [ -f .focus/plan.md ]; then echo '=== [focus] Active Plan ==='; head -20 .focus/plan.md; echo ''; if [ -f .focus/log.md ]; then echo '=== [focus] Recent Log ==='; tail -10 .focus/log.md; echo ''; fi; echo '[focus] Continue from current phase. Read .focus/plan.md, .focus/log.md, and .focus/memory.md for full context.'; fi"
+          command: "echo '[focus] IMPORTANT: Invoke the focus skill before starting any coding work. Classify task complexity and follow the focus process.'; if [ -f .focus/memory.md ]; then echo ''; echo '=== [focus] Session Memory ==='; sed -n '/^## Last Session/,/^## /p' .focus/memory.md | head -15; echo ''; fi; if [ -f .focus/plan.md ]; then echo '=== [focus] Active Plan ==='; head -20 .focus/plan.md; echo ''; if [ -f .focus/log.md ]; then echo '=== [focus] Recent Log ==='; tail -10 .focus/log.md; echo ''; fi; echo '[focus] Continue from current phase. Read .focus/plan.md, .focus/log.md, and .focus/memory.md for full context.'; fi"
   PreToolUse:
     - matcher: "Write|Edit|Bash|Read|Glob|Grep"
       hooks:
