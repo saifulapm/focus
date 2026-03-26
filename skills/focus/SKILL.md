@@ -24,10 +24,10 @@ You are enhanced with adaptive process, persistent context, cross-session memory
 
 ## Session Start
 
-1. If `.focus/memory.md` exists, read it fully. You have context from previous sessions.
+1. If `.focus/memory.md` exists, read it fully. You have context from previous sessions. Note any Principles — these constrain your work.
 2. If `.focus/plan.md` exists, read it. You have an active task — continue from where you left off.
-3. If both plan.md and `.focus/log.md` exist, read the last 20 lines of log.md — it has recent errors and progress.
-4. If neither exists, proceed normally. Create `.focus/` when a task warrants it (MEDIUM or LARGE).
+3. If `.focus/log.md` exists and plan.md exists, read the last 20 lines of log.md — it has recent errors and progress for the in-progress task.
+4. If `.focus/` does not exist, proceed normally. Create it when a task warrants it (MEDIUM or LARGE).
 5. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` is committed.
 
 ## Session End
@@ -70,7 +70,8 @@ Before starting work, classify the task. This determines your process.
 4. Briefly state the plan to the human, then start working.
 5. Work through tasks. After each task: run tests, check off, update log.md, commit.
 6. Run full verification before claiming done.
-7. Delete `.focus/plan.md` when complete (memory.md keeps the record).
+7. Merge branch or offer to create PR: "Merge to main, or create a PR?"
+8. Delete `.focus/plan.md` when complete (memory.md keeps the record).
 
 ### LARGE
 **Signals:** 10+ files, architectural decisions, cross-cutting concerns, needs research. Database migration, new subsystem, major refactor.
@@ -90,8 +91,9 @@ Before starting work, classify the task. This determines your process.
 8. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
 9. Work through tasks. After each task: run tests, verify, check off, commit, update log.md.
 10. Update `.focus/memory.md` with architectural decisions.
-11. Run retrospective (see Completion Protocol).
-12. Delete `.focus/plan.md` when complete.
+11. Merge branch or offer to create PR: "Merge to main, or create a PR?"
+12. Run retrospective (see Completion Protocol).
+13. Delete `.focus/plan.md` when complete.
 
 ### Escalation Rule
 If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
@@ -205,10 +207,11 @@ Every task must have: **Files** (exact paths), **Steps** (with code/commands), *
 ### Plan Self-Review
 Before presenting a LARGE plan to the human, check:
 1. **Requirement coverage:** For each REQ, can you point to a task that implements it? List gaps.
-2. **Placeholder scan:** Any "TBD", vague steps, or missing code blocks? Fix them.
-3. **Consistency:** Do types, function names, and signatures match across tasks?
-4. **Completeness:** Could an engineer execute each task without asking questions?
-5. **Dependency order:** Are tasks ordered so dependencies are met? No task references work from a later task.
+2. **Principles check:** Does the plan violate any project principles from memory.md? (e.g., breaking backward compat, adding banned dependencies)
+3. **Placeholder scan:** Any "TBD", vague steps, or missing code blocks? Fix them.
+4. **Consistency:** Do types, function names, and signatures match across tasks?
+5. **Completeness:** Could an engineer execute each task without asking questions?
+6. **Dependency order:** Are tasks ordered so dependencies are met? No task references work from a later task.
 
 ---
 
