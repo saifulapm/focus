@@ -20,20 +20,17 @@ hooks:
 
 # Focus
 
-Lightweight agent enhancement. You have context persistence, adaptive process, cross-session memory, failure handling, and human steering.
+You are enhanced with adaptive process, persistent context, cross-session memory, structured planning, systematic debugging, and verification-driven completion.
 
 ## Session Start
 
 1. If `.focus/memory.md` exists, read it fully. You have context from previous sessions.
 2. If `.focus/plan.md` exists, read it. You have an active task — continue from where you left off.
-3. If both plan.md and `.focus/log.md` exist, read the last 20 lines of log.md — it has recent errors and progress for the in-progress task.
+3. If both plan.md and `.focus/log.md` exist, read the last 20 lines of log.md — it has recent errors and progress.
 4. If neither exists, proceed normally. Create `.focus/` when a task warrants it (MEDIUM or LARGE).
-4. When creating `.focus/` for the first time, also create `.focus/.gitignore` with:
-   ```
-   plan.md
-   log.md
-   ```
-   This keeps plan and log out of git (they're temporary). `memory.md` is committed (cross-session persistence).
+5. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` is committed.
+
+---
 
 ## Classify Every Task
 
@@ -41,92 +38,208 @@ Before starting work, classify the task. This determines your process.
 
 ### TRIVIAL
 **Signals:** single file, described in under 10 words, fix typo, rename, bump version, toggle flag, add import.
-**Process:** Just do it. Commit. Append one line to `.focus/log.md` (create it if needed):
+**Process:** Just do it. Commit. Append one line to `.focus/log.md` (create if needed):
 ```
 - [YYYY-MM-DD HH:MM] TRIVIAL: <what you did>
 ```
 
 ### SMALL
-**Signals:** 1-3 files, clear implementation path, no architectural decisions, completable in under 5 tool calls. Add a utility function, update error handling, write a test.
+**Signals:** 1-3 files, clear implementation path, no architectural decisions, under 5 tool calls.
 **Process:**
 1. Append a 3-line plan to `.focus/log.md`:
    ```
    ### [YYYY-MM-DD HH:MM] SMALL: <task name>
    Plan: 1) <step> 2) <step> 3) <step>
    ```
-2. Do the work. Commit.
+2. Do the work. Run tests. Commit.
 3. Append result: `Result: Done. Files: <list>`
 
 ### MEDIUM
-**Signals:** 3-10 files, some decisions to make, may need to read existing code first. New feature, module refactor, add API endpoint with tests.
+**Signals:** 3-10 files, some decisions to make, may need to read existing code. New feature, module refactor, add API endpoint.
 **Process:**
-1. Create `.focus/plan.md`:
-   ```markdown
-   # <Task Name>
-   Goal: <one sentence>
-   Level: MEDIUM
-   Started: <YYYY-MM-DD>
-
-   ## Phases
-   - [ ] Phase 1: <description>
-   - [ ] Phase 2: <description>
-   - [ ] Phase 3: <description>
-
-   ## Decisions
-   (filled during work)
-   ```
-2. Briefly state the plan to the human, then start working immediately.
-3. Update `.focus/log.md` after each phase.
-4. Check off phases as completed: `- [x] Phase 1: ...`
-5. Run verification (tests, build, lint) before claiming done.
+1. **Read existing code** in affected areas. Understand patterns and conventions.
+2. Create `.focus/plan.md` using the MEDIUM template (see Plan Templates below).
+3. Briefly state the plan to the human, then start working.
+4. Work through tasks. After each task: run tests, check off, update log.md.
+5. Run full verification before claiming done.
 6. Delete `.focus/plan.md` when complete (memory.md keeps the record).
 
 ### LARGE
-**Signals:** 10+ files, architectural decisions that affect future work, cross-cutting concerns, needs discovery/research. Database migration, auth system redesign, major refactor.
+**Signals:** 10+ files, architectural decisions, cross-cutting concerns, needs research. Database migration, new subsystem, major refactor.
 **Process:**
-1. **Research first.** Before planning, investigate the codebase:
-   - Read existing code in the affected areas
+1. **Ask 3-5 clarifying questions** — one at a time. Focus on: purpose, constraints, preferences, trade-offs. If the user's request is already specific, skip to step 2.
+2. **Research the codebase:**
+   - Read existing code in affected areas
    - Identify patterns, conventions, dependencies
    - Find constraints (what can't change, what breaks if you touch it)
    - Document findings in `.focus/log.md` under `### Research [date]`
-2. Create `.focus/plan.md` with the full spec template:
-   ```markdown
-   # <Task Name>
-   Goal: <one sentence>
-   Level: LARGE
-   Started: <YYYY-MM-DD>
-
-   ## Requirements
-   - REQ-1: <what the system must do>
-   - REQ-2: <what the system must do>
-
-   ## Key Decisions
-   | Decision | Options Considered | Choice | Rationale |
-   |----------|--------------------|--------|-----------|
-
-   ## Phases
-   - [ ] Phase 1: Research & discovery
-   - [ ] Phase 2: <description>
-   - [ ] Phase 3: <description>
-   - [ ] Phase 4: <description>
-
-   ## Affected Files
-   - <file>: <what changes>
-
-   ## Risks
-   - <what could go wrong and how to mitigate>
-   ```
-3. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
-4. After research/discovery phase, check in: "Here's what I found. Plan still looks right / I want to adjust."
-5. Work through phases, verifying each before moving to next.
-6. Update `.focus/memory.md` with architectural decisions.
-7. Delete `.focus/plan.md` when complete.
+3. Create `.focus/plan.md` using the LARGE template (see Plan Templates below).
+4. **Self-review the plan** (see Plan Self-Review below).
+5. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
+6. Work through tasks. After each task: run tests, verify, check off, commit, update log.md.
+7. Update `.focus/memory.md` with architectural decisions.
+8. Delete `.focus/plan.md` when complete.
 
 ### Escalation Rule
-If a task is bigger than you classified:
-- A SMALL task touching 8 files → becomes MEDIUM. Create plan.md.
-- A MEDIUM task with architectural impact → becomes LARGE. Pause, present updated plan, ask the human.
-- Always note the escalation in log.md.
+If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
+
+---
+
+## Plan Templates
+
+### MEDIUM Plan Template
+```markdown
+# <Task Name>
+
+**Goal:** <one sentence>
+**Level:** MEDIUM
+
+---
+
+### Task 1: <Component Name>
+
+**Files:**
+- Create: `exact/path/to/file.ext`
+- Modify: `exact/path/to/existing.ext`
+- Test: `tests/exact/path/to/test.ext`
+
+- [ ] Step 1: <action with code block or exact command>
+- [ ] Step 2: <action>
+- [ ] Step 3: Run tests — `<exact test command>`
+- [ ] Step 4: Commit — `git commit -m "feat: <message>"`
+
+### Task 2: <Component Name>
+
+**Files:**
+- Create: `exact/path/to/file.ext`
+
+- [ ] Step 1: <action>
+- [ ] Step 2: <action>
+- [ ] Step 3: Run tests
+- [ ] Step 4: Commit
+
+## Decisions
+(filled during work)
+```
+
+### LARGE Plan Template
+```markdown
+# <Task Name>
+
+**Goal:** <one sentence>
+**Level:** LARGE
+**Started:** <YYYY-MM-DD>
+
+## Requirements
+- REQ-1: <what the system must do>
+- REQ-2: <what the system must do>
+
+## Design
+<2-3 sentences: approach, key patterns, why this design>
+
+## Key Decisions
+| Decision | Options Considered | Choice | Rationale |
+|----------|-------------------|--------|-----------|
+
+---
+
+### Task 1: <Component Name>
+
+**Files:**
+- Create: `exact/path/to/file.ext`
+- Modify: `exact/path/to/existing.ext:line-range`
+- Test: `tests/exact/path/to/test.ext`
+
+- [ ] Step 1: <action — include code block showing what to write>
+- [ ] Step 2: <action>
+- [ ] Step 3: Run tests — `<exact test command>`
+- [ ] Step 4: Commit — `git commit -m "feat(<scope>): <message>"`
+
+### Task 2: <Component Name>
+
+**Files:**
+- Create: `exact/path/to/file.ext`
+
+- [ ] Step 1: <action>
+- [ ] Step 2: <action>
+- [ ] Step 3: Run tests
+- [ ] Step 4: Commit
+
+## Affected Files Summary
+- `path/file.ext`: <what changes>
+
+## Risks
+- <what could go wrong and how to mitigate>
+```
+
+### Plan Rules — NO PLACEHOLDERS
+These are plan failures. Never write them:
+- "TBD", "TODO", "implement later", "fill in details"
+- "Add appropriate error handling" / "add validation" / "handle edge cases"
+- "Write tests for the above" (without specifying what to test)
+- "Similar to Task N" (repeat the detail — tasks must be standalone)
+- Steps that describe WHAT without showing HOW (include code blocks for code steps)
+- References to types/functions not defined in any task
+
+Every task must have: **Files** (exact paths), **Steps** (with code/commands), **Test step**, **Commit step**.
+
+### Plan Self-Review
+Before presenting a LARGE plan to the human, check:
+1. **Requirement coverage:** For each REQ, can you point to a task that implements it? List gaps.
+2. **Placeholder scan:** Any "TBD", vague steps, or missing code blocks? Fix them.
+3. **Consistency:** Do types, function names, and signatures match across tasks?
+4. **Completeness:** Could an engineer execute each task without asking questions?
+
+---
+
+## Verification Protocol
+
+**Iron Law: NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE.**
+
+Before claiming any task, phase, or the full work is done:
+
+1. **IDENTIFY** — What command proves this claim? (test, build, lint)
+2. **RUN** — Execute the full command fresh (not from memory)
+3. **READ** — Read complete output, check exit code, count failures
+4. **CONFIRM** — Does output confirm the claim?
+   - YES → State claim WITH evidence: "Tests pass (24/24, exit 0)"
+   - NO → State actual status: "3 tests failing: [names]"
+
+**Red flags — STOP if you catch yourself:**
+- Saying "should work", "looks correct", "seems fine"
+- Claiming done without running the command THIS message
+- Trusting a previous run (run it again)
+- Expressing satisfaction before verification ("Great!", "Perfect!")
+
+---
+
+## Systematic Debugging
+
+When something fails, follow these phases in order. Do NOT skip to fixes.
+
+### Phase 1: Investigate (mandatory before any fix)
+1. **Read error messages carefully** — full stack trace, line numbers, error codes
+2. **Reproduce consistently** — exact steps, does it happen every time?
+3. **Check recent changes** — git diff, new deps, config changes
+4. **Trace data flow** — log what enters/exits each component boundary, find where it breaks
+
+### Phase 2: Analyze
+1. Find working examples of similar code in the codebase
+2. Compare working vs broken — list every difference
+3. Understand dependencies and environment requirements
+
+### Phase 3: Hypothesize and test
+1. Form ONE hypothesis: "I think X because Y"
+2. Make the SMALLEST possible change to test it (one variable at a time)
+3. Did it work? Yes → Phase 4. No → new hypothesis, back to step 1
+
+### Phase 4: Fix
+1. Write a failing test that reproduces the bug
+2. Implement single fix addressing root cause
+3. Verify: test passes, no other tests broken
+4. **If 3+ fixes failed:** STOP. Question the architecture. Discuss with human before continuing.
+
+---
 
 ## Failure Handling
 
@@ -137,14 +250,15 @@ When something fails, append to `.focus/log.md` BEFORE trying again:
 - What: <what you tried>
 - Error: <what happened>
 - Attempt: <number>
-- Next: <what you'll try differently>
+- Hypothesis: <why it failed>
+- Next: <what you'll try differently and why>
 ```
 
 ### Rule 2: Never repeat the same approach
-If attempt 1 failed, attempt 2 must be different. Read your log to see what you already tried.
+Attempt 2 must differ from attempt 1. Read your log to see what you already tried.
 
 ### Rule 3: Three strikes, ask the human
-After 3 failed attempts at the same step:
+After 3 failed attempts:
 ```
 I've tried 3 approaches for <step>:
 1. <approach 1> — failed because <reason>
@@ -155,11 +269,9 @@ I'd try <approach 4> next. Proceeding unless you redirect.
 ```
 
 ### Rule 4: Rollback on regression
-If your changes break tests that were passing before:
-1. `git stash` your changes
-2. Log what happened in `.focus/log.md`
-3. Tell the human: "My changes broke existing tests. I've stashed them. Here's what went wrong: ..."
-4. Ask whether to retry from clean state or debug.
+If your changes break passing tests: `git stash`, log it, tell the human, ask whether to retry or debug.
+
+---
 
 ## Human Steering
 
@@ -172,17 +284,29 @@ If your changes break tests that were passing before:
 **Always ask regardless of level when:**
 - Destructive operations (deleting files, dropping tables, force push)
 - Ambiguous requirements (two valid interpretations)
-- Trade-offs the human should weigh ("faster with downtime, or zero-downtime with 3x code?")
+- Trade-offs the human should weigh
 
 **Never ask about:**
 - Code style decisions (follow existing patterns)
 - Which test framework (use what's already there)
 - File organization (follow existing conventions)
 
+---
+
+## Testing
+
+- **TRIVIAL/SMALL:** Run existing tests if they exist. Don't write new ones unless the task is about testing.
+- **MEDIUM:** Write tests for new functionality alongside code. Full suite before last task.
+- **LARGE:** Each task that adds functionality includes a test step. Run tests after every task. Fix before moving on.
+
+No tests in project? Don't force a framework. But suggest if there are edge cases: "This has edge cases worth testing. Want me to add tests?"
+
+---
+
 ## Memory Management
 
 ### When to read
-- Session start: always read `.focus/memory.md` if it exists.
+Session start: always read `.focus/memory.md` if it exists.
 
 ### When to write
 Update `.focus/memory.md` at:
@@ -216,7 +340,7 @@ Update `.focus/memory.md` at:
 ```
 
 ### What NOT to memorize
-- Trivial facts (file paths the agent can discover)
+- Trivial facts the agent can discover by reading code
 - Things already in git history
 - Temporary debugging state
 
@@ -226,29 +350,25 @@ After updating `.focus/` files at session end:
 git add .focus/ && git commit -m "focus: update session state"
 ```
 
-## Testing
-
-- **TRIVIAL/SMALL:** Run existing tests if they exist. Don't write new ones unless the task is specifically about testing.
-- **MEDIUM:** Write tests for new functionality alongside the code. Run the full test suite before marking the last phase complete.
-- **LARGE:** Each phase that adds functionality should include a test. Run tests after every phase, not just at the end. If a test fails, fix it before moving to the next phase.
-
-If the project has no tests yet, don't force a framework. But if you're adding a feature with logic worth testing, suggest it: "This has edge cases worth testing. Want me to add tests?"
+---
 
 ## Completion Protocol
 
 Before claiming any task is done:
-1. If tests exist, run them. All must pass.
-2. If a build step exists, run it. Must succeed.
-3. If you created `.focus/plan.md`, all phases must be checked off.
+1. Run tests. All must pass (with evidence).
+2. Run build/lint if applicable. Must succeed.
+3. All plan tasks checked off.
 4. Update `.focus/log.md` with final status.
 5. Update `.focus/memory.md` Last Session section.
-6. Delete `.focus/plan.md` (the task is done, memory.md has the record).
+6. Delete `.focus/plan.md` (task done, memory.md keeps the record).
 
 ## Anti-Patterns
 
 - Do NOT create plan.md for trivial/small tasks.
 - Do NOT ask the human for approval on obvious changes.
 - Do NOT retry a failed approach without logging what failed first.
-- Do NOT claim done without running verification.
+- Do NOT claim done without running verification and showing evidence.
+- Do NOT write placeholder steps ("add error handling", "write tests for above").
 - Do NOT memorize trivial facts. Only decisions, patterns, and cross-session context.
 - Do NOT leave stale plan.md files. Delete when task is complete.
+- Do NOT say "should work" or "looks correct". Run the command. Show the output.
