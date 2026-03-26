@@ -6,7 +6,7 @@ hooks:
   UserPromptSubmit:
     - hooks:
         - type: command
-          command: "if [ -f .focus/memory.md ]; then echo ''; echo '=== [focus] Session Memory ==='; sed -n '/^## Last Session/,/^## /p' .focus/memory.md | head -15; echo ''; fi; if [ -f .focus/plan.md ]; then echo '=== [focus] Active Plan ==='; head -20 .focus/plan.md; echo ''; if [ -f .focus/log.md ]; then echo '=== [focus] Recent Log ==='; tail -10 .focus/log.md; echo ''; fi; echo '[focus] Continue from current phase. Read .focus/plan.md, .focus/log.md, and .focus/memory.md for full context.'; fi"
+          command: "echo '[focus] Classify this task: TRIVIAL / SMALL / MEDIUM / LARGE. Follow Focus skill instructions.'; if [ -f .focus/memory.md ]; then echo ''; echo '=== [focus] Session Memory ==='; sed -n '/^## Last Session/,/^## /p' .focus/memory.md | head -15; echo ''; fi; if [ -f .focus/plan.md ]; then echo '=== [focus] Active Plan ==='; head -20 .focus/plan.md; echo ''; if [ -f .focus/log.md ]; then echo '=== [focus] Recent Log ==='; tail -10 .focus/log.md; echo ''; fi; echo '[focus] Continue from current phase. Read .focus/plan.md, .focus/log.md, and .focus/memory.md for full context.'; fi"
   PreToolUse:
     - matcher: "Write|Edit|Bash|Read|Glob|Grep"
       hooks:
