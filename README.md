@@ -1,8 +1,12 @@
 # Focus
 
-Adaptive agent enhancement distilled from 8 AI agent frameworks.
+Stop losing context. Stop repeating failures. Just focus.
 
-**253 lines. 0 dependencies. 3 files.**
+## Install
+
+```bash
+npx skills add saifulapm/focus -g
+```
 
 ## What It Does
 
@@ -22,12 +26,6 @@ Adaptive agent enhancement distilled from 8 AI agent frameworks.
 | **Large** | Auth redesign | Research → spec → ask human → execute. |
 
 Tasks escalate mid-work if they turn out bigger than expected.
-
-## Install
-
-```bash
-curl -sL https://raw.githubusercontent.com/saifulapm/focus/main/install.sh | bash
-```
 
 ## License
 

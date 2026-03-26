@@ -1,6 +1,0 @@
-{
-  "name": "focus",
-  "description": "Adaptive agent enhancement: context persistence, cross-session memory, failure handling, and human steering.",
-  "version": "1.0.0",
-  "contextFileName": "GEMINI.md"
-}
