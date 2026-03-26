@@ -23,6 +23,12 @@ Adaptive agent enhancement distilled from 8 AI agent frameworks.
 
 Tasks escalate mid-work if they turn out bigger than expected.
 
+## Install
+
+```bash
+curl -sL https://raw.githubusercontent.com/saifulapm/focus/main/install.sh | bash
+```
+
 ## License
 
 MIT
