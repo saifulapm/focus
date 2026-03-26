@@ -30,6 +30,13 @@ You are enhanced with adaptive process, persistent context, cross-session memory
 4. If neither exists, proceed normally. Create `.focus/` when a task warrants it (MEDIUM or LARGE).
 5. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` is committed.
 
+## Session End
+
+Before the conversation ends:
+1. Update `.focus/memory.md` Last Session section with what was done.
+2. If task is incomplete, note exact stopping point in log.md with clear next steps.
+3. `git add .focus/ && git commit -m "focus: update session state"`
+
 ---
 
 ## Classify Every Task
@@ -58,27 +65,33 @@ Before starting work, classify the task. This determines your process.
 **Signals:** 3-10 files, some decisions to make, may need to read existing code. New feature, module refactor, add API endpoint.
 **Process:**
 1. **Read existing code** in affected areas. Understand patterns and conventions.
-2. Create `.focus/plan.md` using the MEDIUM template (see Plan Templates below).
-3. Briefly state the plan to the human, then start working.
-4. Work through tasks. After each task: run tests, check off, update log.md.
-5. Run full verification before claiming done.
-6. Delete `.focus/plan.md` when complete (memory.md keeps the record).
+2. Create a feature branch: `git checkout -b feat/<task-slug>`
+3. Create `.focus/plan.md` using the MEDIUM template (see Plan Templates below).
+4. Briefly state the plan to the human, then start working.
+5. Work through tasks. After each task: run tests, check off, update log.md, commit.
+6. Run full verification before claiming done.
+7. Delete `.focus/plan.md` when complete (memory.md keeps the record).
 
 ### LARGE
 **Signals:** 10+ files, architectural decisions, cross-cutting concerns, needs research. Database migration, new subsystem, major refactor.
 **Process:**
 1. **Ask 3-5 clarifying questions** — one at a time. Focus on: purpose, constraints, preferences, trade-offs. If the user's request is already specific, skip to step 2.
-2. **Research the codebase:**
+2. **Capture preferences** (first time only): Ask about coding style, naming conventions, error handling philosophy, testing preferences. Save to memory.md under Project Context so this persists across sessions.
+3. **Research the codebase:**
    - Read existing code in affected areas
    - Identify patterns, conventions, dependencies
    - Find constraints (what can't change, what breaks if you touch it)
-   - Document findings in `.focus/log.md` under `### Research [date]`
-3. Create `.focus/plan.md` using the LARGE template (see Plan Templates below).
-4. **Self-review the plan** (see Plan Self-Review below).
-5. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
-6. Work through tasks. After each task: run tests, verify, check off, commit, update log.md.
-7. Update `.focus/memory.md` with architectural decisions.
-8. Delete `.focus/plan.md` when complete.
+   - **2-Action Rule:** After every 2 file reads or searches, append a bullet to log.md summarizing what you found. Do not accumulate more than 2 results without saving.
+   - Document full findings in `.focus/log.md` under `### Research [date]`
+4. **Generate 2-3 design options** with trade-offs for the key architectural decision. Present to human with a recommendation. Wait for input.
+5. Create a feature branch: `git checkout -b feat/<task-slug>`
+6. Create `.focus/plan.md` using the LARGE template (see Plan Templates below).
+7. **Self-review the plan** (see Plan Self-Review below).
+8. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
+9. Work through tasks. After each task: run tests, verify, check off, commit, update log.md.
+10. Update `.focus/memory.md` with architectural decisions.
+11. Run retrospective (see Completion Protocol).
+12. Delete `.focus/plan.md` when complete.
 
 ### Escalation Rule
 If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
@@ -93,6 +106,7 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 
 **Goal:** <one sentence>
 **Level:** MEDIUM
+**Branch:** `feat/<task-slug>`
 
 ---
 
@@ -129,6 +143,7 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 **Goal:** <one sentence>
 **Level:** LARGE
 **Started:** <YYYY-MM-DD>
+**Branch:** `feat/<task-slug>`
 
 ## Requirements
 - REQ-1: <what the system must do>
@@ -145,6 +160,8 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 
 ### Task 1: <Component Name>
 
+**Depends on:** (none, or Task N)
+
 **Files:**
 - Create: `exact/path/to/file.ext`
 - Modify: `exact/path/to/existing.ext:line-range`
@@ -156,6 +173,8 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 - [ ] Step 4: Commit — `git commit -m "feat(<scope>): <message>"`
 
 ### Task 2: <Component Name>
+
+**Depends on:** Task 1
 
 **Files:**
 - Create: `exact/path/to/file.ext`
@@ -189,6 +208,7 @@ Before presenting a LARGE plan to the human, check:
 2. **Placeholder scan:** Any "TBD", vague steps, or missing code blocks? Fix them.
 3. **Consistency:** Do types, function names, and signatures match across tasks?
 4. **Completeness:** Could an engineer execute each task without asking questions?
+5. **Dependency order:** Are tasks ordered so dependencies are met? No task references work from a later task.
 
 ---
 
@@ -296,10 +316,39 @@ If your changes break passing tests: `git stash`, log it, tell the human, ask wh
 ## Testing
 
 - **TRIVIAL/SMALL:** Run existing tests if they exist. Don't write new ones unless the task is about testing.
-- **MEDIUM:** Write tests for new functionality alongside code. Full suite before last task.
-- **LARGE:** Each task that adds functionality includes a test step. Run tests after every task. Fix before moving on.
+- **MEDIUM:** Write tests for new functionality alongside code. Prefer writing the test first (failing), then implementing to make it pass. Full suite before last task.
+- **LARGE:** Each task that adds functionality: write failing test first → implement → verify test passes → verify no regressions. Run full test suite after every task. Fix before moving on.
 
 No tests in project? Don't force a framework. But suggest if there are edge cases: "This has edge cases worth testing. Want me to add tests?"
+
+---
+
+## Code Review
+
+When asked to review code or a PR (not write code):
+1. Read the entire diff completely — do not skim
+2. Check against project principles from memory.md (if they exist)
+3. Categorize findings:
+   - **Blocking:** Must fix before merge (bugs, security, data loss)
+   - **Suggestion:** Should fix, improves quality (performance, readability)
+   - **Nit:** Optional, minor style or naming preferences
+4. Present findings grouped by file, with line references
+5. Note what's done well (not just problems)
+
+---
+
+## Context Health
+
+**2-Action Rule:** During research phases, after every 2 file reads or searches, append a bullet to log.md summarizing what you found. Do not accumulate more than 2 search results in context without saving.
+
+**3-Question Self-Check:** If you feel uncertain about the current state, answer these before continuing:
+1. What is the current task and which step am I on?
+2. What have I completed so far?
+3. What is the exact next step?
+
+If you cannot answer all 3 from memory, re-read plan.md and log.md before continuing.
+
+**Context rot warning:** If the conversation exceeds 50 tool calls on a single task, summarize progress to log.md and suggest the user start a fresh session.
 
 ---
 
@@ -313,6 +362,13 @@ Update `.focus/memory.md` at:
 - End of session (update Last Session)
 - After architectural decisions (add to Decisions table)
 - When you discover important project patterns (add to Project Context)
+- First session in a project: capture coding preferences under Project Context
+
+### Contradiction resolution
+When adding a decision that supersedes a previous one, mark the old decision with ~~strikethrough~~ and note what replaced it. Never leave contradictory decisions active.
+
+### Memory pruning
+At session start, if memory.md exceeds 100 lines: remove completed open items, archive old decisions to `## Archive` at the bottom, keep only the last 3 session summaries.
 
 ### Format
 ```markdown
@@ -322,6 +378,9 @@ Update `.focus/memory.md` at:
 - Stack: <auto-detected>
 - Test runner: <detected>
 - Key patterns: <observed conventions>
+
+## Principles
+- <project guardrails, e.g., "never break backward compat", "prefer composition">
 
 ## Decisions
 | Date | Decision | Rationale |
@@ -344,23 +403,31 @@ Update `.focus/memory.md` at:
 - Things already in git history
 - Temporary debugging state
 
-### Git backing
-After updating `.focus/` files at session end:
-```bash
-git add .focus/ && git commit -m "focus: update session state"
-```
+### Log rules
+`.focus/log.md` is **append-only**. Never edit or delete previous entries. Only append new entries at the bottom.
 
 ---
 
 ## Completion Protocol
 
 Before claiming any task is done:
-1. Run tests. All must pass (with evidence).
-2. Run build/lint if applicable. Must succeed.
-3. All plan tasks checked off.
-4. Update `.focus/log.md` with final status.
-5. Update `.focus/memory.md` Last Session section.
-6. Delete `.focus/plan.md` (task done, memory.md keeps the record).
+1. **Self-review code** against plan requirements — does the implementation match what was specified?
+2. **Check code quality** — any obvious issues, missing error handling in critical paths, unused imports?
+3. Run tests. All must pass (with evidence).
+4. Run build/lint if applicable. Must succeed.
+5. All plan tasks checked off.
+6. Update `.focus/log.md` with final status.
+7. Update `.focus/memory.md` Last Session section.
+8. Delete `.focus/plan.md` (task done, memory.md keeps the record).
+
+### Retrospective (LARGE tasks only)
+After completing a LARGE task, append to memory.md:
+```
+## Retro: <task name> (<date>)
+- What went well: <1-2 points>
+- What went poorly: <1-2 points>
+- Change for next time: <1 actionable improvement>
+```
 
 ## Anti-Patterns
 
@@ -372,3 +439,5 @@ Before claiming any task is done:
 - Do NOT memorize trivial facts. Only decisions, patterns, and cross-session context.
 - Do NOT leave stale plan.md files. Delete when task is complete.
 - Do NOT say "should work" or "looks correct". Run the command. Show the output.
+- Do NOT edit previous log entries. Log is append-only.
+- Do NOT leave contradictory decisions in memory.md. Strikethrough the old one.
