@@ -6,16 +6,16 @@ hooks:
   UserPromptSubmit:
     - hooks:
         - type: command
-          command: "echo '[focus] IMPORTANT: Invoke the focus skill before starting any coding work. Classify task complexity and follow the focus process.'; if [ -f .focus/memory.md ]; then echo ''; echo '=== [focus] Session Memory ==='; sed -n '/^## Last Session/,/^## /p' .focus/memory.md | head -15; echo ''; fi; if [ -f .focus/plan.md ]; then echo '=== [focus] Active Plan ==='; head -20 .focus/plan.md; echo ''; if [ -f .focus/log.md ]; then echo '=== [focus] Recent Log ==='; tail -10 .focus/log.md; echo ''; fi; echo '[focus] Continue from current phase. Read .focus/plan.md, .focus/log.md, and .focus/memory.md for full context.'; fi"
+          command: "s=session-context.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\" \"$HOME/.cursor/skills/focus/scripts/$s\" \"$HOME/.agents/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
   PreToolUse:
     - matcher: "Write|Edit|Bash|Read|Glob|Grep"
       hooks:
         - type: command
-          command: "if [ -f .focus/plan.md ]; then head -20 .focus/plan.md 2>/dev/null; fi"
+          command: "s=plan-tail.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\" \"$HOME/.cursor/skills/focus/scripts/$s\" \"$HOME/.agents/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
   Stop:
     - hooks:
         - type: command
-          command: "if [ -f .focus/plan.md ]; then incomplete=$(grep -c '^- \\[ \\]' .focus/plan.md 2>/dev/null || echo 0); if [ \"$incomplete\" -gt 0 ]; then echo \"[focus] WARNING: $incomplete unchecked phases in plan.md. Verify all work is complete before stopping.\"; fi; fi; if [ -f .focus/memory.md ]; then age=$(($(date +%s) - $(stat -f %m .focus/memory.md 2>/dev/null || stat -c %Y .focus/memory.md 2>/dev/null || echo 0))); if [ \"$age\" -gt 120 ]; then echo '[focus] Reminder: Update .focus/memory.md with session summary before stopping.'; fi; fi"
+          command: "s=check-complete.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\" \"$HOME/.cursor/skills/focus/scripts/$s\" \"$HOME/.agents/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
 ---
 
 # Focus
@@ -24,18 +24,23 @@ You are enhanced with adaptive process, persistent context, cross-session memory
 
 ## Session Start
 
-1. If `.focus/memory.md` exists, read it fully. You have context from previous sessions. Note any Principles — these constrain your work.
-2. If `.focus/plan.md` exists, read it. You have an active task — continue from where you left off.
-3. If `.focus/log.md` exists and plan.md exists, read the last 20 lines of log.md — it has recent errors and progress for the in-progress task.
-4. If `.focus/` does not exist, proceed normally. Create it when a task warrants it (MEDIUM or LARGE).
-5. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` is committed.
+1. If `.focus/memory.md` exists, read it fully. This is **mutable state** — current principles, decisions, project context, open items. Note any Principles — these constrain your work.
+2. If `.focus/journal/` exists, read the **two most recent files** (by filename date). This is **immutable narrative** — what happened in recent sessions. Use it to understand "what was the last person doing" without trusting it for current state.
+3. If `.focus/plan.md` exists, read it.
+   - If it contains a `## Handoff` section, **that section is your ground truth** — see the Handoff Protocol's "Resuming from a handoff" rules. Do not re-derive state from the rest of plan.md or log.md; trust the handoff's "Exact next action".
+   - Otherwise, read the whole plan and continue from the first unchecked task.
+4. If `.focus/log.md` exists and plan.md exists, read the last ~20 lines of log.md — recent errors, "what NOT to do" items, progress for the in-progress task.
+5. If `.focus/` does not exist, proceed normally. Create it when a task warrants it (MEDIUM or LARGE).
+6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` and `journal/` are committed.
+7. **Legacy migration:** if `memory.md` has a `## Last Session` section, that's the old format. Move its contents to `journal/<YYYY-MM-DD>.md` (using the date from the section if present, else today), then delete the section from memory.md. Do this once per project, silently.
 
 ## Session End
 
 Before the conversation ends:
-1. Update `.focus/memory.md` Last Session section with what was done.
-2. If task is incomplete, note exact stopping point in log.md with clear next steps.
-3. `git add .focus/ && git commit -m "focus: update session state"`
+1. **Append today's entry** to `.focus/journal/<YYYY-MM-DD>.md` — what was done this session. Never edit previous entries; only append. Create the file if it doesn't exist.
+2. **Update `.focus/memory.md`** only if state actually changed: new decisions (add to Decisions table), new principles (add to Principles), new open items, resolved open items (strike through). Do NOT write "Last Session" — that belongs in journal.
+3. If task is incomplete, note exact stopping point in log.md with clear next steps.
+4. `git add .focus/ && git commit -m "focus: session <YYYY-MM-DD> — <short summary>"`
 
 ---
 
@@ -66,12 +71,14 @@ Before starting work, classify the task. This determines your process.
 **Process:**
 1. **Read existing code** in affected areas. Understand patterns and conventions.
 2. Create a feature branch: `git checkout -b feat/<task-slug>`
-3. Create `.focus/plan.md` using the MEDIUM template (see Plan Templates below).
-4. Briefly state the plan to the human, then start working.
-5. Work through tasks. After each task: run tests, check off, update log.md, commit.
-6. Run full verification before claiming done.
-7. Merge branch or offer to create PR: "Merge to main, or create a PR?"
-8. Delete `.focus/plan.md` when complete (memory.md keeps the record).
+3. Create `.focus/plan.md` using the MEDIUM template (see Plan Templates, and `references/plans.md`). Every task must satisfy the Atomic Task Schema.
+4. **Run Plan Self-Review.** Resolve any `[NEEDS CLARIFICATION]` markers by asking the human before presenting.
+5. Briefly state the plan to the human, then start working.
+6. Work through tasks in order. For each task: execute Action → run the task's `Verify:` command → confirm `Done when:` holds → commit using the task's `Commit:` message → check off → update log.md.
+7. Run full verification before claiming done.
+8. **Invoke the evaluator** (see Evaluator Gate below). Address any `CHANGES REQUESTED` or `FAIL` verdict before proceeding. Do not skip this step — your own verification is input to the evaluator, not a substitute for it.
+9. Merge branch or offer to create PR: "Merge to main, or create a PR?"
+10. Delete `.focus/plan.md` when complete (memory.md keeps the record).
 
 ### LARGE
 **Signals:** 10+ files, architectural decisions, cross-cutting concerns, needs research. Database migration, new subsystem, major refactor.
@@ -86,14 +93,15 @@ Before starting work, classify the task. This determines your process.
    - Document full findings in `.focus/log.md` under `### Research [date]`
 4. **Generate 2-3 design options** with trade-offs for the key architectural decision. Present to human with a recommendation. Wait for input.
 5. Create a feature branch: `git checkout -b feat/<task-slug>`
-6. Create `.focus/plan.md` using the LARGE template (see Plan Templates below).
-7. **Self-review the plan** (see Plan Self-Review below).
+6. Create `.focus/plan.md` using the LARGE template (see `references/plans.md`). Every task must satisfy the Atomic Task Schema, and the Requirement → Task Map must be filled.
+7. **Self-review the plan** (the 9-item checklist in `references/plans.md`). Resolve any `[NEEDS CLARIFICATION]` markers before presenting.
 8. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
-9. Work through tasks. After each task: run tests, verify, check off, commit, update log.md.
-10. Update `.focus/memory.md` with architectural decisions.
-11. Merge branch or offer to create PR: "Merge to main, or create a PR?"
-12. Run retrospective (see Completion Protocol).
-13. Delete `.focus/plan.md` when complete.
+9. Work through tasks in order. For each task: execute Action → run the task's `Verify:` command → confirm `Done when:` holds → commit using the task's `Commit:` message → check off → update log.md.
+10. **After each top-level task (and before marking the full plan complete), invoke the evaluator** (see Evaluator Gate below). LARGE plans tend to silently drift from requirements; per-task evaluation catches drift early. Address any `CHANGES REQUESTED` or `FAIL` verdict before continuing.
+11. Update `.focus/memory.md` with architectural decisions.
+12. Merge branch or offer to create PR: "Merge to main, or create a PR?"
+13. Run retrospective (see Completion Protocol).
+14. Delete `.focus/plan.md` when complete.
 
 ### Escalation Rule
 If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
@@ -102,116 +110,97 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 
 ## Plan Templates
 
-### MEDIUM Plan Template
-```markdown
-# <Task Name>
+**Every plan task uses the Atomic Task Schema:** required fields are **Files, Action, Verify, Done when, Commit**. A task missing any of these is not ready to execute. `Verify` must be a runnable command; `Done when` must be an observable signal (not "looks right"). One commit per task.
 
-**Goal:** <one sentence>
-**Level:** MEDIUM
-**Branch:** `feat/<task-slug>`
+**Before execution:** if any required field can't be filled without guessing, write `[NEEDS CLARIFICATION: <question>]` in place. Any such marker blocks execution until resolved with the human.
 
----
+**Before presenting a MEDIUM/LARGE plan:** run the 9-item Plan Self-Review.
 
-### Task 1: <Component Name>
-
-**Files:**
-- Create: `exact/path/to/file.ext`
-- Modify: `exact/path/to/existing.ext`
-- Test: `tests/exact/path/to/test.ext`
-
-- [ ] Step 1: <action with code block or exact command>
-- [ ] Step 2: <action>
-- [ ] Step 3: Run tests — `<exact test command>`
-- [ ] Step 4: Commit — `git commit -m "feat: <message>"`
-
-### Task 2: <Component Name>
-
-**Files:**
-- Create: `exact/path/to/file.ext`
-
-- [ ] Step 1: <action>
-- [ ] Step 2: <action>
-- [ ] Step 3: Run tests
-- [ ] Step 4: Commit
-
-## Decisions
-(filled during work)
-```
-
-### LARGE Plan Template
-```markdown
-# <Task Name>
-
-**Goal:** <one sentence>
-**Level:** LARGE
-**Started:** <YYYY-MM-DD>
-**Branch:** `feat/<task-slug>`
-
-## Requirements
-- REQ-1: <what the system must do>
-- REQ-2: <what the system must do>
-
-## Design
-<2-3 sentences: approach, key patterns, why this design>
-
-## Key Decisions
-| Decision | Options Considered | Choice | Rationale |
-|----------|-------------------|--------|-----------|
+**Read `skills/focus/references/plans.md`** when creating or reviewing a plan — it has the full MEDIUM and LARGE templates, the no-placeholders rule, and the Self-Review checklist.
 
 ---
 
-### Task 1: <Component Name>
+## Evaluator Gate
 
-**Depends on:** (none, or Task N)
+**Why this exists.** When asked to evaluate their own work, generators overwhelmingly return "looks good" — a result reproduced across Anthropic's harness experiments and every reference harness Focus draws from. Self-verification is necessary but not sufficient. The evaluator is a **fresh, adversarial** reader of the plan and the diff, with no memory of how the work got made.
 
-**Files:**
-- Create: `exact/path/to/file.ext`
-- Modify: `exact/path/to/existing.ext:line-range`
-- Test: `tests/exact/path/to/test.ext`
+**When to invoke.**
+- **MEDIUM:** once, before marking the plan complete.
+- **LARGE:** after each top-level task, and once before marking the plan complete.
+- **TRIVIAL / SMALL:** skip. Not worth the overhead.
 
-- [ ] Step 1: <action — include code block showing what to write>
-- [ ] Step 2: <action>
-- [ ] Step 3: Run tests — `<exact test command>`
-- [ ] Step 4: Commit — `git commit -m "feat(<scope>): <message>"`
+**How to invoke** — use the first mode your host supports:
 
-### Task 2: <Component Name>
+1. **Sub-agent mode (preferred — Claude Code, Cursor).** Spawn a fresh sub-agent using the host's Agent / Task primitive. Tell it: *"Run the `/focus:evaluate` command against the current branch. Return the verdict exactly in the specified format. You have no prior context — read `.focus/plan.md` and the diff yourself."*
 
-**Depends on:** Task 1
+2. **Brief mode (Codex, OpenCode, Gemini, or fallback).** Run the `evaluator-brief.sh` script that ships with the skill. Resolve its path via the same lookup the hooks use: `${CLAUDE_PLUGIN_ROOT:-}/scripts/evaluator-brief.sh`, then fall back to `$HOME/.claude/skills/focus/scripts/`, `$HOME/.cursor/skills/focus/scripts/`, or `$HOME/.agents/skills/focus/scripts/` — whichever your host installs to. The script writes `.focus/evaluator-brief.md` in the current project — a self-contained handoff with the plan, diff, and principles. Tell the human: *"Paste `.focus/evaluator-brief.md` into a fresh session and run `/focus:evaluate`, then paste the verdict back."* This is weaker than sub-agent mode — the evaluator still has human-loop latency — but preserves the key property: the evaluator has no memory of the generator's reasoning.
 
-**Files:**
-- Create: `exact/path/to/file.ext`
+In either mode, the evaluator's output format is defined in `commands/evaluate.md` (the `/focus:evaluate` command). Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
 
-- [ ] Step 1: <action>
-- [ ] Step 2: <action>
-- [ ] Step 3: Run tests
-- [ ] Step 4: Commit
+**What to do with the verdict.**
+- **PASS** — proceed to merge. Record any evaluator suggestions in log.md for next-session follow-up.
+- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent / fresh brief). Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
+- **FAIL** — the plan itself is wrong, not just the code. Update plan.md, note the escalation in log.md, consider whether the task has become LARGE, then continue.
+- **UNCERTAIN** — the evaluator asked a specific question. Answer it in plan.md or log.md, then re-invoke.
 
-## Affected Files Summary
-- `path/file.ext`: <what changes>
+**Anti-patterns for the generator:**
+- Do **not** prompt the evaluator with a summary of what was built — let it read the diff cold.
+- Do **not** re-invoke the same evaluator instance after a FAIL. Context contamination defeats the purpose. Use a fresh agent / fresh session every time.
+- Do **not** accept a PASS that skipped running `Verify:` commands — the evaluator must have command output in its report.
+- Do **not** self-grant PASS by writing the evaluator's verdict yourself. If sub-agent and brief mode are both unavailable, tell the human the plan cannot be marked complete without human review.
 
-## Risks
-- <what could go wrong and how to mitigate>
+---
+
+## Principles Gate
+
+Principles are project-level constraints — "never break backward compat", "no new npm dependencies", "prefer composition over inheritance". They outlive any one task. Focus treats them as **first-class inputs to plan creation and evaluation**, not decoration.
+
+### Where principles live
+
+- `memory.md` `## Principles` section — primary home, always loaded.
+- `.focus/principles.md` (optional) — separate file for larger projects that want principles isolated from project context. If present, it is **merged** with memory.md's section, not overriding it.
+
+The `scripts/principles.sh` loader reads both and prints the merged set. `session-context.sh`, `plan-tail.sh`, `evaluator-brief.sh`, and the Stop hook all use this loader — principles surface consistently.
+
+### Recommended format
+
+Lead each principle with a strength keyword so both humans and evaluators can gauge it:
+
+```markdown
+## Principles
+- **MUST NOT** add runtime npm dependencies without explicit approval.
+- **MUST** keep public APIs backward-compatible through a full major version.
+- **PREFER** composition over inheritance; inheritance requires a decision entry.
+- **AVOID** tests that mock the database — use the test harness at `tests/db.ts`.
 ```
 
-### Plan Rules — NO PLACEHOLDERS
-These are plan failures. Never write them:
-- "TBD", "TODO", "implement later", "fill in details"
-- "Add appropriate error handling" / "add validation" / "handle edge cases"
-- "Write tests for the above" (without specifying what to test)
-- "Similar to Task N" (repeat the detail — tasks must be standalone)
-- Steps that describe WHAT without showing HOW (include code blocks for code steps)
-- References to types/functions not defined in any task
+Plain bullets without keywords are fine too — Focus just loses the severity signal.
 
-Every task must have: **Files** (exact paths), **Steps** (with code/commands), **Test step**, **Commit step**.
+### When principles are surfaced
 
-### Plan Self-Review
-Before presenting a LARGE plan to the human, check:
-1. **Requirement coverage:** For each REQ, can you point to a task that implements it? List gaps.
-2. **Principles check:** Does the plan violate any project principles from memory.md? (e.g., breaking backward compat, adding banned dependencies)
-3. **Placeholder scan:** Any "TBD", vague steps, or missing code blocks? Fix them.
-4. **Consistency:** Do types, function names, and signatures match across tasks?
-5. **Completeness:** Could an engineer execute each task without asking questions?
-6. **Dependency order:** Are tasks ordered so dependencies are met? No task references work from a later task.
+1. **Plan creation** (MEDIUM/LARGE): the session-context hook prints the Principles block before any tool call. Plan Self-Review explicitly checks for violations (item 6 in that list).
+2. **Evaluator run**: `evaluator-brief.sh` includes principles as a dedicated section; the `/focus:evaluate` command checks the diff against them and treats violations as blocker issues. The evaluator is the primary enforcement point.
+3. **Before stop** (advisory): `check-complete.sh` reminds the generator principles are active if there are pending changes. One-line nudge, not enforcement.
+
+### When principles change
+
+Principles are added/edited in **memory.md** like any other state:
+- New principle stated by user → append with the MUST / MUST NOT / PREFER keyword, add to memory.md during the session.
+- Principle superseded → strikethrough the old line; add the new one with a decision entry explaining the change.
+- Never silently edit or remove a principle: future sessions need to see the transition.
+
+### What principles are NOT
+
+- Not a replacement for code review — principles cover recurring project-wide constraints, not per-diff quality.
+- Not a build-time gate — Focus will never block a commit because of a principle. The decision to override is always the human's; Focus just makes sure the decision is conscious.
+- Not a dumping ground — 20 principles is too many for an agent to weigh. Aim for 3–7. Everything else is Project Context or a Decision.
+
+### Anti-patterns
+
+- Do **not** write principles that can't be checked against a diff ("write clean code"). Either make it specific enough to check, or put it in Project Context.
+- Do **not** bury principles in prose inside Project Context — use the dedicated section so the loader finds them.
+- Do **not** accept an evaluator PASS that ignored a principle violation. That's a calibration failure — flag it in log.md and fix the evaluator's next brief.
+- Do **not** silently violate a principle "just this once". If the task requires it, add a decision entry saying so.
 
 ---
 
@@ -238,29 +227,9 @@ Before claiming any task, phase, or the full work is done:
 
 ## Systematic Debugging
 
-When something fails, follow these phases in order. Do NOT skip to fixes.
+Summary: **Investigate → Analyze → Hypothesize → Fix**, one variable at a time. Do NOT skip to fixes. If 3+ fixes failed in a row, question the architecture with the human.
 
-### Phase 1: Investigate (mandatory before any fix)
-1. **Read error messages carefully** — full stack trace, line numbers, error codes
-2. **Reproduce consistently** — exact steps, does it happen every time?
-3. **Check recent changes** — git diff, new deps, config changes
-4. **Trace data flow** — log what enters/exits each component boundary, find where it breaks
-
-### Phase 2: Analyze
-1. Find working examples of similar code in the codebase
-2. Compare working vs broken — list every difference
-3. Understand dependencies and environment requirements
-
-### Phase 3: Hypothesize and test
-1. Form ONE hypothesis: "I think X because Y"
-2. Make the SMALLEST possible change to test it (one variable at a time)
-3. Did it work? Yes → Phase 4. No → new hypothesis, back to step 1
-
-### Phase 4: Fix
-1. Write a failing test that reproduces the bug
-2. Implement single fix addressing root cause
-3. Verify: test passes, no other tests broken
-4. **If 3+ fixes failed:** STOP. Question the architecture. Discuss with human before continuing.
+**Read `skills/focus/references/debugging.md`** when a `Verify:` fails or behavior is unexpected — it has the full four-phase procedure and debugging anti-patterns.
 
 ---
 
@@ -316,27 +285,13 @@ If your changes break passing tests: `git stash`, log it, tell the human, ask wh
 
 ---
 
-## Testing
+## Testing & Code Review
 
-- **TRIVIAL/SMALL:** Run existing tests if they exist. Don't write new ones unless the task is about testing.
-- **MEDIUM:** Write tests for new functionality alongside code. Prefer writing the test first (failing), then implementing to make it pass. Full suite before last task.
-- **LARGE:** Each task that adds functionality: write failing test first → implement → verify test passes → verify no regressions. Run full test suite after every task. Fix before moving on.
+- **TRIVIAL/SMALL:** run existing tests if present; don't add new ones.
+- **MEDIUM/LARGE:** tests are part of the work — prefer test-first, verify no regressions.
+- **Code review (not writing code):** read the diff end-to-end; categorize as Blocking / Suggestion / Nit.
 
-No tests in project? Don't force a framework. But suggest if there are edge cases: "This has edge cases worth testing. Want me to add tests?"
-
----
-
-## Code Review
-
-When asked to review code or a PR (not write code):
-1. Read the entire diff completely — do not skim
-2. Check against project principles from memory.md (if they exist)
-3. Categorize findings:
-   - **Blocking:** Must fix before merge (bugs, security, data loss)
-   - **Suggestion:** Should fix, improves quality (performance, readability)
-   - **Nit:** Optional, minor style or naming preferences
-4. Present findings grouped by file, with line references
-5. Note what's done well (not just problems)
+**Read `skills/focus/references/testing-and-review.md`** when writing tests for a MEDIUM/LARGE task or when asked to review a PR — it has the per-level testing rules, what counts as a real test, and the review procedure with anti-patterns.
 
 ---
 
@@ -349,65 +304,110 @@ When asked to review code or a PR (not write code):
 2. What have I completed so far?
 3. What is the exact next step?
 
-If you cannot answer all 3 from memory, re-read plan.md and log.md before continuing.
+If you cannot answer all 3 from memory, re-read plan.md and log.md before continuing. If you still cannot answer after re-reading, emit a Handoff (see below) and ask the user to start a fresh session.
 
-**Context rot warning:** If the conversation exceeds 50 tool calls on a single task, summarize progress to log.md and suggest the user start a fresh session.
+---
+
+## Handoff Protocol
+
+**Why this exists.** Context windows are finite. Evidence from long-running harnesses is consistent: context *resets* — starting a fresh agent from a written handoff — outperform in-place compaction, which quietly drops details and triggers "context anxiety" (the agent hurrying toward completion because it senses the window filling). Focus handles exhaustion by design: it writes a compact, machine-readable handoff block to `plan.md`, then the next agent reads that block instead of the dying conversation.
+
+### When to emit a handoff
+
+Emit a handoff whenever **any** of these hold:
+
+- **Tool-call budget:** you have done ~40+ tool calls on the current task since plan.md was created (or since the last handoff).
+- **Natural boundary:** a LARGE plan's top-level task has just completed — even if you have budget left, a handoff here gives the evaluator and the next task a clean slate.
+- **User request:** the user types `/focus:handoff` or says "hand off".
+- **Self-detected drift:** the 3-Question Self-Check above fails even after re-reading plan.md and log.md. Do not push through — hand off.
+- **Evaluator FAIL:** after an evaluator returns FAIL with a plan-level revision required, write the handoff so the next session picks up from the corrected plan, not the exhausted one.
+
+Do **not** emit a handoff on every task completion. Small tasks inside MEDIUM plans can chain — handoff only when context is actually taxed or a natural reset point arrives.
+
+### Handoff artifact
+
+The handoff lives **at the bottom of `plan.md`**, in a `## Handoff` section, replaced each time. One section only — do not accumulate handoff history (that's what log.md is for).
+
+Format:
+
+```markdown
+## Handoff
+
+**Emitted:** <YYYY-MM-DD HH:MM>  **Reason:** <budget | boundary | user | drift | evaluator-fail>
+
+**Current task:** Task N — <name>
+**Current step:** <which checkbox in the task's sub-list, e.g., "Verify passes">
+**Branch:** `<branch name>`  **Last commit:** `<sha> <subject>`
+
+**Done so far:**
+- Task 1 — <name> — committed as `<sha>`
+- Task 2 — <name> — committed as `<sha>`
+- Task 3 up to step 2 of 4 — not yet committed
+
+**Exact next action:**
+<one paragraph. Include the exact command to run, file to edit, or question to ask the human. A fresh agent must be able to act on this without rereading anything but plan.md and log.md.>
+
+**Files in play:**
+- `path/to/file.ext` — <what is half-done here, if anything>
+
+**Recent verification:**
+- `<cmd>` → <exit code, summary>  (run at <time>)
+
+**Open questions for the human:**
+- <question 1, if any — otherwise omit this section>
+
+**Principles still in force:**
+- <copy from memory.md / principles.md — the subset actually relevant to the remaining work>
+
+**What NOT to do:**
+- <approaches already tried and failed; load this from log.md. Keeps the next agent from retrying the same path.>
+```
+
+### Emitting a handoff — procedure
+
+1. **Stop current work.** Do not start a new tool call after deciding to hand off.
+2. **Flush log.md.** If there are unsummarized search results or error notes in conversation memory that are not yet in log.md, append them now.
+3. **Write the handoff block** to the bottom of plan.md using the format above. Replace any existing `## Handoff` section — only the latest handoff is kept.
+4. **Tell the user plainly:**
+   ```
+   Handoff written to .focus/plan.md (§Handoff). Context is near its useful limit.
+   Recommend: /clear, then start a fresh session. The new agent will pick up from the handoff.
+   ```
+5. **Commit:** `git add .focus/plan.md .focus/log.md && git commit -m "focus: handoff at task N"`. The commit is essential — it makes the handoff durable across session boundaries, including crashes.
+
+### Resuming from a handoff
+
+At session start, when `.focus/plan.md` exists:
+
+1. **Read the `## Handoff` section first** — if present, it is your ground truth. Trust it over any other cue.
+2. Read the rest of plan.md (Requirements, Design, task list) to understand the full scope.
+3. Read the last ~20 lines of log.md — specifically for the "what NOT to do" items the handoff references.
+4. Begin work at the **Exact next action**. Do not re-derive state from scratch. Do not re-verify tasks already marked with a commit sha in "Done so far" — trust the handoff.
+5. If the handoff's Exact next action is unclear or impossible (e.g., a file it references doesn't exist), stop and ask the user. A handoff that won't execute is a bug in the previous session, not something to paper over.
+
+### Anti-patterns
+
+- Do **not** emit a handoff without a next-action sentence a fresh agent can execute literally. "Continue the refactor" is not a next action; "Edit `src/auth.ts` at line 42 — replace `validateToken` with `verifyJwt` per Task 3" is.
+- Do **not** skip the commit. An uncommitted handoff vanishes if the session crashes.
+- Do **not** accumulate handoff history in plan.md. Only the current handoff; log.md keeps the trail.
+- Do **not** resume a handoff while the previous context is still loaded. The whole point is a fresh start — use `/clear` or a new session.
+- Do **not** leave a handoff in place after completing the plan. Delete plan.md (and with it the handoff) as part of the Completion Protocol.
 
 ---
 
 ## Memory Management
 
-### When to read
-Session start: always read `.focus/memory.md` if it exists.
+Focus keeps two persistent files plus a per-task scratchpad:
 
-### When to write
-Update `.focus/memory.md` at:
-- End of session (update Last Session)
-- After architectural decisions (add to Decisions table)
-- When you discover important project patterns (add to Project Context)
-- First session in a project: capture coding preferences under Project Context
+| File | Kind | Content |
+|------|------|---------|
+| `memory.md` | **Mutable state** (edited) | Principles, Decisions, Project Context, Open Items |
+| `journal/YYYY-MM-DD.md` | **Immutable narrative** (append-only) | Per-session summaries, retrospectives |
+| `log.md` | **Active-task scratch** (append-only) | Research findings, errors, attempts — deleted with plan.md when the task completes |
 
-### Contradiction resolution
-When adding a decision that supersedes a previous one, mark the old decision with ~~strikethrough~~ and note what replaced it. Never leave contradictory decisions active.
+The split is load-bearing: mixing state and narrative in one file means future agents can't tell which bullets still describe reality. Never write "Last Session" into memory.md; never edit past journal entries; never delete log.md mid-task.
 
-### Memory pruning
-At session start, if memory.md exceeds 100 lines: remove completed open items, archive old decisions to `## Archive` at the bottom, keep only the last 3 session summaries.
-
-### Format
-```markdown
-# Memory
-
-## Project Context
-- Stack: <auto-detected>
-- Test runner: <detected>
-- Key patterns: <observed conventions>
-
-## Principles
-- <project guardrails, e.g., "never break backward compat", "prefer composition">
-
-## Decisions
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| YYYY-MM-DD | <what> | <why> |
-
-## Open Items
-- [ ] <thing that needs doing later>
-
-## Last Session
-- Date: YYYY-MM-DD
-- Task: <what was done>
-- Status: Complete | In Progress
-- Key files: <files touched>
-- Notes: <anything the next session needs to know>
-```
-
-### What NOT to memorize
-- Trivial facts the agent can discover by reading code
-- Things already in git history
-- Temporary debugging state
-
-### Log rules
-`.focus/log.md` is **append-only**. Never edit or delete previous entries. Only append new entries at the bottom.
+**Read `skills/focus/references/memory.md`** when writing to memory.md or journal/ at session end, when pruning, or when migrating a legacy `## Last Session` section — it has the formats, field templates, and the migration procedure.
 
 ---
 
@@ -419,12 +419,14 @@ Before claiming any task is done:
 3. Run tests. All must pass (with evidence).
 4. Run build/lint if applicable. Must succeed.
 5. All plan tasks checked off.
-6. Update `.focus/log.md` with final status.
-7. Update `.focus/memory.md` Last Session section.
-8. Delete `.focus/plan.md` (task done, memory.md keeps the record).
+6. **MEDIUM/LARGE only: Invoke the evaluator** (see Evaluator Gate). Only a PASS verdict permits completion. CHANGES REQUESTED or FAIL sends you back to step 1 after fixes.
+7. Update `.focus/log.md` with final status (include the evaluator verdict summary).
+8. Append a session entry to `.focus/journal/<YYYY-MM-DD>.md`.
+9. Update `.focus/memory.md` only if state changed (new principle / decision / open item).
+10. Delete `.focus/plan.md` and `.focus/log.md` (task done; the journal keeps the record).
 
 ### Retrospective (LARGE tasks only)
-After completing a LARGE task, append to memory.md:
+After completing a LARGE task, append to today's journal file (`.focus/journal/<YYYY-MM-DD>.md`):
 ```
 ## Retro: <task name> (<date>)
 - What went well: <1-2 points>
@@ -436,12 +438,18 @@ After completing a LARGE task, append to memory.md:
 
 - Do NOT use Claude Code's built-in plan mode (EnterPlanMode). Write plans directly to `.focus/plan.md` using the templates above. Focus manages its own planning.
 - Do NOT create plan.md for trivial/small tasks.
+- Do NOT write a task without all five required fields (Files, Action, Verify, Done when, Commit).
+- Do NOT start execution while any `[NEEDS CLARIFICATION]` marker remains in plan.md.
 - Do NOT ask the human for approval on obvious changes.
 - Do NOT retry a failed approach without logging what failed first.
-- Do NOT claim done without running verification and showing evidence.
+- Do NOT claim done without running the task's `Verify:` command and confirming its `Done when:` criterion.
+- Do NOT skip the Evaluator Gate on MEDIUM/LARGE plans. Your own "looks good" is not a verdict.
+- Do NOT write the evaluator's report yourself. Either spawn a fresh agent, generate a brief for the human, or declare the plan uncompletable.
 - Do NOT write placeholder steps ("add error handling", "write tests for above").
 - Do NOT memorize trivial facts. Only decisions, patterns, and cross-session context.
 - Do NOT leave stale plan.md files. Delete when task is complete.
 - Do NOT say "should work" or "looks correct". Run the command. Show the output.
 - Do NOT edit previous log entries. Log is append-only.
+- Do NOT edit previous journal entries. Journal is append-only; the history is the point.
+- Do NOT write session summaries or "Last Session" into memory.md. Session narrative goes in journal/.
 - Do NOT leave contradictory decisions in memory.md. Strikethrough the old one.

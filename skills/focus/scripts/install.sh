@@ -22,11 +22,14 @@ if [ -d "$CLAUDE_DIR" ]; then
     echo "[focus] Claude Code: Installing..."
   fi
 
-  mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/templates" "$CMD_DIR"
+  mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/templates" "$SKILL_DIR/references" "$CMD_DIR"
   cp "$SKILL_ROOT/SKILL.md" "$SKILL_DIR/SKILL.md"
-  cp "$SCRIPT_DIR/check-complete.sh" "$SKILL_DIR/scripts/check-complete.sh"
-  chmod +x "$SKILL_DIR/scripts/check-complete.sh"
+  for s in check-complete.sh evaluator-brief.sh session-context.sh plan-tail.sh principles.sh; do
+    cp "$SCRIPT_DIR/$s" "$SKILL_DIR/scripts/$s"
+    chmod +x "$SKILL_DIR/scripts/$s"
+  done
   cp "$SKILL_ROOT/templates/"* "$SKILL_DIR/templates/" 2>/dev/null || true
+  cp "$SKILL_ROOT/references/"*.md "$SKILL_DIR/references/" 2>/dev/null || true
   cp "$PROJECT_ROOT/commands/"*.md "$CMD_DIR/" 2>/dev/null || true
 
   installed="$installed Claude-Code"
@@ -43,11 +46,14 @@ if [ -d "$CURSOR_DIR" ]; then
     echo "[focus] Cursor: Installing..."
   fi
 
-  mkdir -p "$CURSOR_SKILL_DIR/scripts" "$CURSOR_SKILL_DIR/templates"
+  mkdir -p "$CURSOR_SKILL_DIR/scripts" "$CURSOR_SKILL_DIR/templates" "$CURSOR_SKILL_DIR/references"
   cp "$SKILL_ROOT/SKILL.md" "$CURSOR_SKILL_DIR/SKILL.md"
-  cp "$SCRIPT_DIR/check-complete.sh" "$CURSOR_SKILL_DIR/scripts/check-complete.sh"
-  chmod +x "$CURSOR_SKILL_DIR/scripts/check-complete.sh"
+  for s in check-complete.sh evaluator-brief.sh session-context.sh plan-tail.sh principles.sh; do
+    cp "$SCRIPT_DIR/$s" "$CURSOR_SKILL_DIR/scripts/$s"
+    chmod +x "$CURSOR_SKILL_DIR/scripts/$s"
+  done
   cp "$SKILL_ROOT/templates/"* "$CURSOR_SKILL_DIR/templates/" 2>/dev/null || true
+  cp "$SKILL_ROOT/references/"*.md "$CURSOR_SKILL_DIR/references/" 2>/dev/null || true
 
   installed="$installed Cursor"
 fi
@@ -89,4 +95,4 @@ fi
 
 echo ""
 echo "Done. Focus activates on your next session."
-echo "Commands: /focus:status"
+echo "Commands: /focus:status, /focus:evaluate, /focus:handoff"
