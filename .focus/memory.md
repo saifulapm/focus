@@ -19,15 +19,15 @@
 | 2026-03-26 | Codex uses symlink, not plugin | Codex discovers SKILL.md natively via ~/.agents/skills/ |
 | 2026-03-26 | OpenCode uses JS plugin (CommonJS) | OpenCode requires JS module for config + system prompt hooks |
 
+## Principles
+- **MUST** keep SKILL.md under ~500 lines; push depth into `skills/focus/references/*.md` as it grows.
+- **MUST NOT** introduce npm runtime dependencies. Pure markdown + shell, + the single JS file for OpenCode.
+- **MUST** scale ceremony to task size — TRIVIAL/SMALL stay ceremony-free.
+- **MUST NOT** mix session narrative and state — narrative goes in journal/, state in memory.md.
+- **PREFER** scripts over inline shell in hook commands; hooks should be one-line dispatchers.
+
 ## Open Items
 - [ ] Test on actual Cursor installation
 - [ ] Test Codex symlink discovery
 - [ ] Publish to npm/GitHub for real installs
 - [ ] Consider adding Windsurf, Kilo, and other agents
-
-## Last Session
-- Date: 2026-03-26
-- Task: Added multi-agent support (Claude Code, Cursor, Codex, OpenCode, Gemini CLI)
-- Status: Complete
-- Key files: .claude-plugin/plugin.json, .cursor-plugin/plugin.json, hooks/hooks.json, hooks/hooks-cursor.json, hooks/session-start, .codex/INSTALL.md, .opencode/plugins/focus.js, gemini-extension.json, GEMINI.md, install.sh, README.md
-- Notes: All 7 phases complete. All JSON validates. OpenCode JS module loads. Install script auto-detects agents.
