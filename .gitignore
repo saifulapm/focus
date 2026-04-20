@@ -1,3 +1,4 @@
 # Focus temporary working files (per-task, not persisted)
 .focus/plan.md
 .focus/log.md
+resources/
