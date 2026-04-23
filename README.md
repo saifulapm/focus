@@ -1,8 +1,6 @@
 # Focus
 
-A lean harness for AI coding agents. Stop losing context. Stop grading your own homework. Just focus.
-
-Works with **Claude Code, Cursor, Codex, OpenCode, and Gemini CLI**.
+A lean harness for Claude Code. Stop losing context. Stop grading your own homework. Just focus.
 
 ## Install
 
@@ -12,7 +10,7 @@ cd focus
 bash skills/focus/scripts/install.sh
 ```
 
-The installer auto-detects which agents you have installed and wires up the skill, commands, and hooks for each. No npm, no runtime dependencies — pure markdown + shell.
+The installer copies the skill to `~/.claude/skills/focus/`, commands to `~/.claude/commands/focus/`, and wires up the hooks. No npm, no runtime dependencies — pure markdown + shell.
 
 ## What it does
 
@@ -43,7 +41,7 @@ Tasks escalate mid-work if they turn out bigger than expected.
 3. **Clarify** — any `[NEEDS CLARIFICATION: ...]` marker blocks execution until the human answers.
 4. **Self-review** — 9-item plan checklist catches placeholders, missing tests, principle violations, scope creep.
 5. **Execute** — per task: run Action → run Verify → confirm Done-when → commit. One commit per atomic task enables git-bisect recovery.
-6. **Evaluate** — a fresh sub-agent (or handoff brief for hosts without sub-agents) reads the plan and diff cold, verifies each requirement is actually implemented in the code, returns PASS / CHANGES REQUESTED / FAIL. Self-verification does not count.
+6. **Evaluate** — a fresh sub-agent reads the plan and diff cold, verifies each requirement is actually implemented in the code, returns PASS / CHANGES REQUESTED / FAIL. Self-verification does not count.
 7. **Merge or PR** — only after evaluator PASS.
 8. **Journal** — appends a session entry to `.focus/journal/YYYY-MM-DD.md` so the next session starts informed.
 
@@ -71,7 +69,7 @@ Focus writes a `.focus/.gitignore` the first time it creates the directory.
 
 ## Principles
 
-You can declare project-level guardrails in `memory.md` under `## Principles` (or in the optional `.focus/principles.md`). Focus surfaces them at plan creation, in the evaluator brief, and as an advisory before you stop. Use strength keywords so the evaluator can calibrate:
+You can declare project-level guardrails in `memory.md` under `## Principles` (or in the optional `.focus/principles.md`). Focus surfaces them at plan creation, in the evaluator's check, and as an advisory before you stop. Use strength keywords so the evaluator can calibrate:
 
 ```markdown
 ## Principles
@@ -83,18 +81,6 @@ You can declare project-level guardrails in `memory.md` under `## Principles` (o
 
 The evaluator treats `MUST` / `MUST NOT` violations as blockers. Focus itself never blocks a commit — enforcement lives in the evaluator, not the hooks.
 
-## Supported hosts
-
-| Host | Install path | Sub-agent mode? |
-|---|---|---|
-| Claude Code | `~/.claude/skills/focus/` | Yes — auto-spawns evaluator |
-| Cursor | `~/.cursor/skills/focus/` | Yes |
-| Codex | `~/.agents/skills/focus/` (via symlink) | Brief mode (paste into fresh session) |
-| OpenCode | `~/.opencode/plugins/focus.js` | Brief mode |
-| Gemini CLI | `~/.gemini/extensions/focus/` | Brief mode |
-
-"Brief mode" means Focus writes `.focus/evaluator-brief.md` — a self-contained plan + diff + principles — for you to paste into a fresh session. Same evaluator prompt, same verdict format, just human-loop latency.
-
 ## Design notes
 
 Focus draws on Anthropic's harness-design research plus a cross-analysis of BMAD-METHOD, agent-kernel, get-shit-done, spec-kit, and superpowers. Three patterns the field has converged on:
@@ -103,7 +89,7 @@ Focus draws on Anthropic's harness-design research plus a cross-analysis of BMAD
 - **Independent evaluator** (from Anthropic and superpowers) — a fresh agent grades the diff, not the generator.
 - **Structured context reset** (from Anthropic) — handoff artifacts beat in-place compaction.
 
-What Focus adds: **adaptive ceremony** (TRIVIAL → LARGE, with escalation) and **one-skill install** across five hosts. The other harnesses each implement one or two of these patterns but at much higher complexity. Focus keeps the skill under 500 lines of always-loaded context, with depth pushed to on-demand reference files.
+What Focus adds: **adaptive ceremony** (TRIVIAL → LARGE, with escalation) and **one-skill install** on Claude Code. The other harnesses each implement one or two of these patterns but at much higher complexity. Focus keeps the skill under 500 lines of always-loaded context, with depth pushed to on-demand reference files.
 
 ## License
 
