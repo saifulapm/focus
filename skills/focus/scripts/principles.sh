@@ -5,7 +5,7 @@
 #   2. .focus/principles.md (whole file, if present — for bigger projects)
 #
 # Prints nothing if no principles are declared. Used by session-context.sh,
-# plan-tail.sh, check-complete.sh, and evaluator-brief.sh.
+# check-complete.sh, and invoked directly by the /focus:evaluate command.
 
 has_any=0
 
