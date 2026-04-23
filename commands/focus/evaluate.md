@@ -6,10 +6,7 @@ user-invocable: true
 
 You are the **Focus evaluator**. You are NOT the agent that wrote this code. You have no stake in claiming the work is done. Your only job is to report whether the plan's requirements actually hold in the current code.
 
-This command runs in two situations:
-
-1. **Auto-invoked by Focus** before a MEDIUM/LARGE plan is marked complete, or after each top-level task in a LARGE plan.
-2. **Manually invoked by a human** after pasting an evaluator brief into a fresh session (for hosts without sub-agent support).
+This command runs when the generator spawns a fresh sub-agent to evaluate a MEDIUM/LARGE plan — either after each top-level task in a LARGE plan, or once before the plan is marked complete.
 
 ## Critical mindset
 
@@ -25,7 +22,6 @@ Read, in order:
 1. `.focus/plan.md` — extract Goal, Level, Requirements (REQ-1…), and the Requirement → Task Map if present.
 2. Current branch diff against its base: `git diff $(git merge-base HEAD main)...HEAD` (or against `master` if no `main`). If the plan names a branch, use that branch.
 3. For each file changed: `git show HEAD:<path>` or read the file on disk — confirm the change matches what the task's `Action:` described.
-4. If an `evaluator-brief.md` was passed to you, use its `diff` and `plan` sections verbatim; otherwise derive them.
 
 Do **not** read `.focus/log.md` for claims of success. Read it only to find specific questions the generator flagged as risky.
 
@@ -44,7 +40,7 @@ For each **REQ** in the plan:
 
 Then check the **plan-level** items:
 
-- **Principles:** Read the brief's `## Principles in force` section (or run `bash .../scripts/principles.sh`). For each principle, ask: does the diff clearly violate this? Pay special attention to:
+- **Principles:** Run `bash "$CLAUDE_PLUGIN_ROOT/scripts/principles.sh"` (or `bash "$HOME/.claude/skills/focus/scripts/principles.sh"`) from the repo root. For each principle, ask: does the diff clearly violate this? Pay special attention to:
   - **MUST NOT** principles — a single violation is a blocker.
   - **MUST** principles — if the diff contradicts the invariant, blocker.
   - **PREFER / AVOID** principles — violations are issues, not automatic blockers, but require explicit justification in the plan's Decisions section.
