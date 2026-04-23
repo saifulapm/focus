@@ -129,25 +129,19 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 - **LARGE:** after each top-level task, and once before marking the plan complete.
 - **TRIVIAL / SMALL:** skip. Not worth the overhead.
 
-**How to invoke** — use the first mode your host supports:
-
-1. **Sub-agent mode (preferred — Claude Code, Cursor).** Spawn a fresh sub-agent using the host's Agent / Task primitive. Tell it: *"Run the `/focus:evaluate` command against the current branch. Return the verdict exactly in the specified format. You have no prior context — read `.focus/plan.md` and the diff yourself."*
-
-2. **Brief mode (Codex, OpenCode, Gemini, or fallback).** Run the `evaluator-brief.sh` script that ships with the skill. Resolve its path via the same lookup the hooks use: `${CLAUDE_PLUGIN_ROOT:-}/scripts/evaluator-brief.sh`, then fall back to `$HOME/.claude/skills/focus/scripts/`, `$HOME/.cursor/skills/focus/scripts/`, or `$HOME/.agents/skills/focus/scripts/` — whichever your host installs to. The script writes `.focus/evaluator-brief.md` in the current project — a self-contained handoff with the plan, diff, and principles. Tell the human: *"Paste `.focus/evaluator-brief.md` into a fresh session and run `/focus:evaluate`, then paste the verdict back."* This is weaker than sub-agent mode — the evaluator still has human-loop latency — but preserves the key property: the evaluator has no memory of the generator's reasoning.
-
-In either mode, the evaluator's output format is defined in `commands/focus/evaluate.md` (the `/focus:evaluate` command). Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
+**How to invoke.** Spawn a fresh sub-agent using Claude Code's Agent / Task primitive. Tell it: *"Run the `/focus:evaluate` command against the current branch. Return the verdict exactly in the specified format. You have no prior context — read `.focus/plan.md` and the diff yourself."* The evaluator's output format is defined in `commands/focus/evaluate.md`. Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
 
 **What to do with the verdict.**
 - **PASS** — proceed to merge. Record any evaluator suggestions in log.md for next-session follow-up.
-- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent / fresh brief). Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
+- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent every time). Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
 - **FAIL** — the plan itself is wrong, not just the code. Update plan.md, note the escalation in log.md, consider whether the task has become LARGE, then continue.
 - **UNCERTAIN** — the evaluator asked a specific question. Answer it in plan.md or log.md, then re-invoke.
 
 **Anti-patterns for the generator:**
 - Do **not** prompt the evaluator with a summary of what was built — let it read the diff cold.
-- Do **not** re-invoke the same evaluator instance after a FAIL. Context contamination defeats the purpose. Use a fresh agent / fresh session every time.
+- Do **not** re-invoke the same evaluator instance after a FAIL. Context contamination defeats the purpose. Use a fresh agent every time.
 - Do **not** accept a PASS that skipped running `Verify:` commands — the evaluator must have command output in its report.
-- Do **not** self-grant PASS by writing the evaluator's verdict yourself. If sub-agent and brief mode are both unavailable, tell the human the plan cannot be marked complete without human review.
+- Do **not** self-grant PASS by writing the evaluator's verdict yourself. If sub-agent spawn fails, tell the human the plan cannot be marked complete without human review, rather than freelancing the verdict.
 
 ---
 
@@ -160,7 +154,7 @@ Principles are project-level constraints — "never break backward compat", "no 
 - `memory.md` `## Principles` section — primary home, always loaded.
 - `.focus/principles.md` (optional) — separate file for larger projects that want principles isolated from project context. If present, it is **merged** with memory.md's section, not overriding it.
 
-The `scripts/principles.sh` loader reads both and prints the merged set. `session-context.sh`, `plan-tail.sh`, `evaluator-brief.sh`, and the Stop hook all use this loader — principles surface consistently.
+The `scripts/principles.sh` loader reads both and prints the merged set. `session-context.sh` and the Stop hook use this loader — principles surface consistently.
 
 ### Recommended format
 
@@ -179,7 +173,7 @@ Plain bullets without keywords are fine too — Focus just loses the severity si
 ### When principles are surfaced
 
 1. **Plan creation** (MEDIUM/LARGE): the session-context hook prints the Principles block before any tool call. Plan Self-Review explicitly checks for violations (item 6 in that list).
-2. **Evaluator run**: `evaluator-brief.sh` includes principles as a dedicated section; the `/focus:evaluate` command checks the diff against them and treats violations as blocker issues. The evaluator is the primary enforcement point.
+2. **Evaluator run**: the `/focus:evaluate` command loads principles via `principles.sh` and checks the diff against them, treating violations as blocker issues. The evaluator is the primary enforcement point.
 3. **Before stop** (advisory): `check-complete.sh` reminds the generator principles are active if there are pending changes. One-line nudge, not enforcement.
 
 ### When principles change
