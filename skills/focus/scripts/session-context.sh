@@ -8,18 +8,25 @@
 
 echo '[focus] IMPORTANT: Invoke the focus skill before starting any coding work. Classify task complexity and follow the focus process.'
 
-if [ -f .focus/memory.md ]; then
+# Surface the two sections most load-bearing for a fresh session:
+# Principles (via the shared loader so .focus/principles.md is honored too)
+# and Open Items (unique to memory.md).
+dir="$(dirname "$0")"
+principles=$(bash "$dir/principles.sh" 2>/dev/null)
+if [ -n "$principles" ] || { [ -f .focus/memory.md ] && grep -q '^## Open Items' .focus/memory.md 2>/dev/null; }; then
   echo
   echo '=== [focus] Memory (current state) ==='
-  # Show Principles + Open Items — the two sections most load-bearing for
-  # a fresh session. Skip Project Context (usually long) and full Decisions
-  # table; agent will read the full file if needed.
-  awk '
-    /^## Principles/      { section = "p"; print; next }
-    /^## Open Items/      { section = "o"; print; next }
-    /^## /                { section = "" }
-    section               { print }
-  ' .focus/memory.md | head -30
+  if [ -n "$principles" ]; then
+    echo "$principles"
+    echo
+  fi
+  if [ -f .focus/memory.md ]; then
+    awk '
+      /^## Open Items/ { in_o = 1; print; next }
+      in_o && /^## /   { in_o = 0 }
+      in_o             { print }
+    ' .focus/memory.md | head -15
+  fi
   echo
 fi
 

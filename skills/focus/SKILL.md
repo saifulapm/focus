@@ -135,7 +135,7 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 
 2. **Brief mode (Codex, OpenCode, Gemini, or fallback).** Run the `evaluator-brief.sh` script that ships with the skill. Resolve its path via the same lookup the hooks use: `${CLAUDE_PLUGIN_ROOT:-}/scripts/evaluator-brief.sh`, then fall back to `$HOME/.claude/skills/focus/scripts/`, `$HOME/.cursor/skills/focus/scripts/`, or `$HOME/.agents/skills/focus/scripts/` — whichever your host installs to. The script writes `.focus/evaluator-brief.md` in the current project — a self-contained handoff with the plan, diff, and principles. Tell the human: *"Paste `.focus/evaluator-brief.md` into a fresh session and run `/focus:evaluate`, then paste the verdict back."* This is weaker than sub-agent mode — the evaluator still has human-loop latency — but preserves the key property: the evaluator has no memory of the generator's reasoning.
 
-In either mode, the evaluator's output format is defined in `commands/evaluate.md` (the `/focus:evaluate` command). Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
+In either mode, the evaluator's output format is defined in `commands/focus/evaluate.md` (the `/focus:evaluate` command). Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
 
 **What to do with the verdict.**
 - **PASS** — proceed to merge. Record any evaluator suggestions in log.md for next-session follow-up.

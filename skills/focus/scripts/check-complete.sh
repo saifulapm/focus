@@ -23,7 +23,20 @@ if [ "$incomplete" -gt 0 ]; then
 fi
 
 # --- Clarification blockers ---
-blockers=$(grep -c '\[NEEDS CLARIFICATION' .focus/plan.md 2>/dev/null); blockers=${blockers:-0}
+# Match real blockers while skipping mentions inside backtick code spans
+# (e.g. a requirement description that documents the marker format itself).
+# A real blocker: "[NEEDS CLARIFICATION: <question>]" inline in prose or a
+# task field. A documentation mention: "`[NEEDS CLARIFICATION: ...]`" wrapped
+# in backticks. Awk filters lines where the marker appears between backticks.
+blockers=$(awk '
+  /\[NEEDS CLARIFICATION:/ {
+    line = $0
+    # Remove any `...` spans; if the marker survives, it was unquoted.
+    gsub(/`[^`]*`/, "", line)
+    if (line ~ /\[NEEDS CLARIFICATION:/) count++
+  }
+  END { print count + 0 }
+' .focus/plan.md 2>/dev/null); blockers=${blockers:-0}
 if [ "$blockers" -gt 0 ]; then
   echo "[focus] === CLARIFICATION BLOCKERS ==="
   echo "[focus] $blockers unresolved [NEEDS CLARIFICATION] marker(s) in plan.md."

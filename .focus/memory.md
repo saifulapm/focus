@@ -39,4 +39,4 @@
 - [x] ~~Publish to GitHub for real installs~~ — done 2026-04-23 (v2 pushed)
 - [ ] Publish to npm for `npx skills add`-style install
 - [ ] Consider adding Windsurf, Kilo, and other agents
-- [ ] Run `/focus:evaluate` retroactively against v2 diff as dog-food (in-progress this session)
+- [x] ~~Run `/focus:evaluate` retroactively against v2 diff as dog-food~~ — done 2026-04-23. Verdict: CHANGES REQUESTED (1 blocker + 3 suggestions + 3 nits). Issues 1-3 fixed this session; Issues 4-7 (Gemini files, templates/, stale install hint paths, README 5-host over-claim) queued as follow-ups.
