@@ -8,7 +8,7 @@ hooks:
         - type: command
           command: "s=session-context.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
   PreToolUse:
-    - matcher: "Write|Edit|Bash|Read|Glob|Grep"
+    - matcher: "Write|Edit|Bash"
       hooks:
         - type: command
           command: "s=plan-tail.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
@@ -31,7 +31,7 @@ You are enhanced with adaptive process, persistent context, cross-session memory
    - Otherwise, read the whole plan and continue from the first unchecked task.
 4. If `.focus/log.md` exists and plan.md exists, read the last ~20 lines of log.md — recent errors, "what NOT to do" items, progress for the in-progress task.
 5. If `.focus/` does not exist, proceed normally. Create it when a task warrants it (MEDIUM or LARGE).
-6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` and `journal/` are committed.
+6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md`, `log.md`, and `.toolcount` (temporary files). `memory.md` and `journal/` are committed.
 7. **Legacy migration:** if `memory.md` has a `## Last Session` section, that's the old format. Move its contents to `journal/<YYYY-MM-DD>.md` (using the date from the section if present, else today), then delete the section from memory.md. Do this once per project, silently.
 
 ## Session End
@@ -89,7 +89,7 @@ Before starting work, classify the task. This determines your process.
    - Read existing code in affected areas
    - Identify patterns, conventions, dependencies
    - Find constraints (what can't change, what breaks if you touch it)
-   - **2-Action Rule:** After every 2 file reads or searches, append a bullet to log.md summarizing what you found. Do not accumulate more than 2 results without saving.
+   - **Research Flush Rule:** Flush findings to log.md at the end of each research question, or after ~5 reads/searches — whichever comes first. For broad exploration, prefer dispatching a read-only sub-agent that writes findings to log.md, keeping raw file contents out of your context.
    - Document full findings in `.focus/log.md` under `### Research [date]`
 4. **Generate 2-3 design options** with trade-offs for the key architectural decision. Present to human with a recommendation. Wait for input.
 5. Create a feature branch: `git checkout -b feat/<task-slug>`
@@ -291,7 +291,7 @@ If your changes break passing tests: `git stash`, log it, tell the human, ask wh
 
 ## Context Health
 
-**2-Action Rule:** During research phases, after every 2 file reads or searches, append a bullet to log.md summarizing what you found. Do not accumulate more than 2 search results in context without saving.
+**Research Flush Rule:** During research phases, flush findings to log.md at the end of each research question, or after ~5 reads/searches — whichever comes first. Conclusions go to log.md; raw file contents are disposable.
 
 **3-Question Self-Check:** If you feel uncertain about the current state, answer these before continuing:
 1. What is the current task and which step am I on?
@@ -310,7 +310,7 @@ If you cannot answer all 3 from memory, re-read plan.md and log.md before contin
 
 Emit a handoff whenever **any** of these hold:
 
-- **Tool-call budget:** you have done ~40+ tool calls on the current task since plan.md was created (or since the last handoff).
+- **Tool-call budget:** the PreToolUse hook counts calls in `.focus/.toolcount` and warns at 40+ since the last plan.md change. Heed the warning — you cannot count your own tool calls reliably. (If you simply forgot to check off completed tasks, do that instead; it resets the counter.)
 - **Natural boundary:** a LARGE plan's top-level task has just completed — even if you have budget left, a handoff here gives the evaluator and the next task a clean slate.
 - **User request:** the user types `/focus:handoff` or says "hand off".
 - **Self-detected drift:** the 3-Question Self-Check above fails even after re-reading plan.md and log.md. Do not push through — hand off.
@@ -374,10 +374,11 @@ Format:
 At session start, when `.focus/plan.md` exists:
 
 1. **Read the `## Handoff` section first** — if present, it is your ground truth. Trust it over any other cue.
-2. Read the rest of plan.md (Requirements, Design, task list) to understand the full scope.
-3. Read the last ~20 lines of log.md — specifically for the "what NOT to do" items the handoff references.
-4. Begin work at the **Exact next action**. Do not re-derive state from scratch. Do not re-verify tasks already marked with a commit sha in "Done so far" — trust the handoff.
-5. If the handoff's Exact next action is unclear or impossible (e.g., a file it references doesn't exist), stop and ask the user. A handoff that won't execute is a bug in the previous session, not something to paper over.
+2. **Archive it immediately** — append the handoff block to log.md under `### Consumed handoff <YYYY-MM-DD HH:MM>`, then delete the `## Handoff` section from plan.md. A handoff is read-once: leaving it in plan.md makes the hooks keep re-injecting stale resume state for the rest of the session.
+3. Read the rest of plan.md (Requirements, Design, task list) to understand the full scope.
+4. Read the last ~20 lines of log.md — specifically for the "what NOT to do" items the handoff references.
+5. Begin work at the **Exact next action**. Do not re-derive state from scratch. Do not re-verify tasks already marked with a commit sha in "Done so far" — trust the handoff.
+6. If the handoff's Exact next action is unclear or impossible (e.g., a file it references doesn't exist), stop and ask the user. A handoff that won't execute is a bug in the previous session, not something to paper over.
 
 ### Anti-patterns
 
@@ -385,6 +386,7 @@ At session start, when `.focus/plan.md` exists:
 - Do **not** skip the commit. An uncommitted handoff vanishes if the session crashes.
 - Do **not** accumulate handoff history in plan.md. Only the current handoff; log.md keeps the trail.
 - Do **not** resume a handoff while the previous context is still loaded. The whole point is a fresh start — use `/clear` or a new session.
+- Do **not** leave a consumed handoff in plan.md. Archiving it to log.md is your first action after reading it — otherwise hooks re-inject it on every cycle.
 - Do **not** leave a handoff in place after completing the plan. Delete plan.md (and with it the handoff) as part of the Completion Protocol.
 
 ---

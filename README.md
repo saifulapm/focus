@@ -18,7 +18,7 @@ Focus fixes four failure modes that every long-running coding agent hits:
 
 | Failure | Focus's answer |
 |---|---|
-| Agent loses the plan after a few tool calls | Hooks re-inject the active plan before every tool call |
+| Agent loses the plan after a few tool calls | Hooks re-inject the plan's goal + current task at throttled intervals, with a 40-call handoff budget warning |
 | Agent grades its own work and declares "done" on half-built code | **Evaluator gate** — a fresh sub-agent reads the plan + diff cold and returns PASS / CHANGES / FAIL |
 | Agent runs out of context and summarizes into a lossy blob | **Handoff protocol** — structured `## Handoff` block written to plan.md before context exhaustion; a fresh session resumes from it |
 | Agent forgets decisions between sessions | **Memory split** — `memory.md` (mutable state) + `journal/` (append-only narrative) persist across sessions |
