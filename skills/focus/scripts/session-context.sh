@@ -5,8 +5,14 @@
 # it hasn't re-invoked the skill yet. Handoff-aware: when plan.md contains a
 # ## Handoff section, surface that section instead of the plan head, because
 # the handoff is the ground truth for a resuming agent.
+#
+# Silent in projects without .focus/ — skill discovery is the job of the
+# skill's description field, not a per-prompt nag. The hook only surfaces
+# state that actually exists.
 
-echo '[focus] IMPORTANT: Invoke the focus skill before starting any coding work. Classify task complexity and follow the focus process.'
+[ -d .focus ] || exit 0
+
+echo "[focus] Now: $(date '+%Y-%m-%d %H:%M'). Use this timestamp for log/journal entries. Invoke the focus skill before coding work."
 
 # Surface the two sections most load-bearing for a fresh session:
 # Principles (via the shared loader so .focus/principles.md is honored too)
