@@ -24,13 +24,12 @@ else
   echo "[focus] Claude Code: Installing..."
 fi
 
-mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/templates" "$SKILL_DIR/references" "$CMD_DIR/focus"
+mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/references" "$CMD_DIR/focus"
 cp "$SKILL_ROOT/SKILL.md" "$SKILL_DIR/SKILL.md"
 for s in check-complete.sh session-context.sh plan-tail.sh principles.sh; do
   cp "$SCRIPT_DIR/$s" "$SKILL_DIR/scripts/$s"
   chmod +x "$SKILL_DIR/scripts/$s"
 done
-cp "$SKILL_ROOT/templates/"* "$SKILL_DIR/templates/" 2>/dev/null || true
 cp "$SKILL_ROOT/references/"*.md "$SKILL_DIR/references/" 2>/dev/null || true
 # Commands live under commands/focus/ so they appear as /focus:<name>.
 cp "$PROJECT_ROOT/commands/focus/"*.md "$CMD_DIR/focus/" 2>/dev/null || true

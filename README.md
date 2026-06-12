@@ -4,13 +4,22 @@ A lean harness for Claude Code. Stop losing context. Stop grading your own homew
 
 ## Install
 
+**Option A — plugin (recommended).** Inside Claude Code:
+
+```
+/plugin marketplace add saifulapm/focus
+/plugin install focus@focus
+```
+
+**Option B — script.** Copies the skill to `~/.claude/skills/focus/` and commands to `~/.claude/commands/focus/`:
+
 ```bash
 git clone https://github.com/saifulapm/focus.git
 cd focus
 bash skills/focus/scripts/install.sh
 ```
 
-The installer copies the skill to `~/.claude/skills/focus/`, commands to `~/.claude/commands/focus/`, and wires up the hooks. No npm, no runtime dependencies — pure markdown + shell.
+Both wire up the same skill, commands, and hooks. No npm, no runtime dependencies — pure markdown + shell.
 
 ## What it does
 

@@ -1,0 +1,11 @@
+{
+  "name": "focus",
+  "owner": { "name": "Saiful Islam" },
+  "plugins": [
+    {
+      "name": "focus",
+      "source": "./",
+      "description": "A lean harness for Claude Code: adaptive task ceremony, persistent plans, an independent evaluator gate, structured handoffs, and cross-session memory."
+    }
+  ]
+}
