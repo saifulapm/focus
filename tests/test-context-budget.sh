@@ -22,7 +22,7 @@ mkdir -p .focus/journal
 for f in 2026-01-01 2026-01-02; do
   { printf '# Journal — %s\n' "$f"
     for i in $(seq 1 60); do
-      printf '\n## %02d:00 — session entry %s\n- **Task:** something moderately descriptive that ran that day (MEDIUM)\n- **Notes:** a sentence of narrative that makes the file realistically heavy.\n' $((i %% 24)) "$i"
+      printf '\n## %02d:00 — session entry %s\n- **Task:** something moderately descriptive that ran that day (MEDIUM)\n- **Notes:** a sentence of narrative that makes the file realistically heavy.\n' "$((i % 24))" "$i"
     done
   } > ".focus/journal/$f.md"
 done
