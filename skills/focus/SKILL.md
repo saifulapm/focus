@@ -8,7 +8,7 @@ hooks:
         - type: command
           command: "s=session-context.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
   PreToolUse:
-    - matcher: "Write|Edit|Bash|Read|Glob|Grep"
+    - matcher: "Write|Edit|Bash"
       hooks:
         - type: command
           command: "s=plan-tail.sh; for p in \"${CLAUDE_PLUGIN_ROOT:-}/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
@@ -31,7 +31,7 @@ You are enhanced with adaptive process, persistent context, cross-session memory
    - Otherwise, read the whole plan and continue from the first unchecked task.
 4. If `.focus/log.md` exists and plan.md exists, read the last ~20 lines of log.md — recent errors, "what NOT to do" items, progress for the in-progress task.
 5. If `.focus/` does not exist, proceed normally. Create it when a task warrants it (MEDIUM or LARGE).
-6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md` and `log.md` (temporary files). `memory.md` and `journal/` are committed.
+6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md`, `log.md`, and `.toolcount` (temporary files). `memory.md` and `journal/` are committed.
 7. **Legacy migration:** if `memory.md` has a `## Last Session` section, that's the old format. Move its contents to `journal/<YYYY-MM-DD>.md` (using the date from the section if present, else today), then delete the section from memory.md. Do this once per project, silently.
 
 ## Session End
@@ -310,7 +310,7 @@ If you cannot answer all 3 from memory, re-read plan.md and log.md before contin
 
 Emit a handoff whenever **any** of these hold:
 
-- **Tool-call budget:** you have done ~40+ tool calls on the current task since plan.md was created (or since the last handoff).
+- **Tool-call budget:** the PreToolUse hook counts calls in `.focus/.toolcount` and warns at 40+ since the last plan.md change. Heed the warning — you cannot count your own tool calls reliably. (If you simply forgot to check off completed tasks, do that instead; it resets the counter.)
 - **Natural boundary:** a LARGE plan's top-level task has just completed — even if you have budget left, a handoff here gives the evaluator and the next task a clean slate.
 - **User request:** the user types `/focus:handoff` or says "hand off".
 - **Self-detected drift:** the 3-Question Self-Check above fails even after re-reading plan.md and log.md. Do not push through — hand off.
