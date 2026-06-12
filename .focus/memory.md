@@ -26,7 +26,8 @@
 | 2026-03-26 | GEMINI.md = SKILL.md body without frontmatter | Gemini doesn't support hooks, just reads context file |
 | 2026-03-26 | Codex uses symlink, not plugin | Codex discovers SKILL.md natively via ~/.agents/skills/ |
 | 2026-03-26 | OpenCode uses JS plugin (CommonJS) | OpenCode requires JS module for config + system prompt hooks |
-| 2026-04-23 | Slash commands live under `commands/focus/` (not flat `commands/`) | Claude Code derives slash names from filename paths, not frontmatter `name:`; subdirectory produces `/focus:<cmd>` namespace |
+| 2026-04-23 | ~~Slash commands live under `commands/focus/` (not flat `commands/`)~~ — superseded 2026-06-12 | Claude Code derives slash names from filename paths, not frontmatter `name:`; subdirectory produces `/focus:<cmd>` namespace |
+| 2026-06-12 | Slash commands live FLAT at `commands/` | Real plugin install proved plugins prefix commands with the plugin name: `commands/focus/x.md` became `/focus:focus:x`. Flat files give `/focus:x` under the plugin; install.sh copies them into `~/.claude/commands/focus/` so script installs keep the same names |
 | 2026-04-23 | Any LARGE change to Focus itself MUST go through `.focus/plan.md` with atomic tasks + evaluator | v2 was built without dog-fooding its own rules; this guardrail prevents the blind spot recurring |
 | 2026-04-23 | Scope reduced to Claude Code only | User workflow is Claude-only; maintenance cost of 5-host support not justified. Removed: Cursor / Codex / OpenCode / Gemini install paths, brief-mode evaluator, evaluator-brief.sh. |
 | 2026-06-12 | PreToolUse injection throttled: every 5th Write/Edit/Bash call via `.focus/.toolcount`, counter resets on plan.md change, warns at 40+ | Repeated identical context degrades attention and wastes tokens (Anthropic article; planning-with-files v3 reached the same conclusion) |

@@ -31,8 +31,9 @@ for s in check-complete.sh session-context.sh plan-tail.sh principles.sh; do
   chmod +x "$SKILL_DIR/scripts/$s"
 done
 cp "$SKILL_ROOT/references/"*.md "$SKILL_DIR/references/" 2>/dev/null || true
-# Commands live under commands/focus/ so they appear as /focus:<name>.
-cp "$PROJECT_ROOT/commands/focus/"*.md "$CMD_DIR/focus/" 2>/dev/null || true
+# Repo keeps commands flat (plugin namespacing adds the focus: prefix);
+# the script install copies them into commands/focus/ for the same effect.
+cp "$PROJECT_ROOT/commands/"*.md "$CMD_DIR/focus/" 2>/dev/null || true
 # Legacy cleanup: remove un-namespaced copies from older installs to
 # prevent /<name> and /focus:<name> both resolving.
 for legacy in evaluate.md handoff.md status.md; do
