@@ -106,6 +106,8 @@ Before starting work, classify the task. This determines your process.
 ### Escalation Rule
 If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
 
+**De-escalation:** if work collapses below its classification (a planned MEDIUM turns out to be a 2-line fix), drop to the lighter process: note the de-escalation and reason in log.md, finish under the new level's rules, delete plan.md if no longer warranted. The evaluator gate is waived only when the final level is below MEDIUM. Never de-escalate to dodge a failing evaluator — that is an escalation signal, not a scope change.
+
 ---
 
 ## Plan Templates
