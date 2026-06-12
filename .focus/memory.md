@@ -44,4 +44,4 @@
 - [ ] Publish to npm for `npx skills add`-style install
 - [x] ~~Consider adding Windsurf, Kilo, and other agents~~ — out of scope 2026-04-23 (Claude-only)
 - [x] ~~Run `/focus:evaluate` retroactively against v2 diff as dog-food~~ — done 2026-04-23. Verdict: CHANGES REQUESTED (1 blocker + 3 suggestions + 3 nits). Issues 1-3 fixed that session; Issues 4-7 (Gemini files, templates/, stale install hint paths, README 5-host over-claim) resolved by the Claude-only scope reduction.
-- [ ] Clean up `skills/focus/templates/` — contains only a `gitignore` file no longer referenced anywhere (evaluator Issue 5). (TRIVIAL)
+- [x] ~~Clean up `skills/focus/templates/`~~ — done 2026-06-12 (improvement-plan Phase 6)
