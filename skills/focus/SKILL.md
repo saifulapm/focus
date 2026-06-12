@@ -85,10 +85,10 @@ Before starting work, classify the task. This determines your process.
 **Process:**
 1. **Ask 3-5 clarifying questions** — one at a time. Focus on: purpose, constraints, preferences, trade-offs. If the user's request is already specific, skip to step 3.
 2. **Capture preferences** (if not already in memory.md): Ask about coding style, naming conventions, error handling philosophy, testing preferences. Save to memory.md under Project Context so this persists across sessions.
-3. **Research the codebase:**
-   - Read existing code in affected areas
-   - Identify patterns, conventions, dependencies
-   - Find constraints (what can't change, what breaks if you touch it)
+3. **Research the codebase — delegate, don't accumulate:**
+   - **Prefer read-only sub-agents** (Explore type if available) for broad questions — one per research question ("how does auth work here", "where do API routes live"). Instruct each to return a compact findings report: file paths, patterns, constraints — never raw file dumps. Your context holds conclusions, not contents.
+   - **Single writer:** sub-agents return findings; only you append them to `.focus/log.md` under `### Research [date]`.
+   - Read directly only the files you will edit. Identify patterns, conventions, dependencies, and constraints (what can't change, what breaks if you touch it).
    - **Research Flush Rule:** Flush findings to log.md at the end of each research question, or after ~5 reads/searches — whichever comes first. For broad exploration, prefer dispatching a read-only sub-agent that writes findings to log.md, keeping raw file contents out of your context.
    - Document full findings in `.focus/log.md` under `### Research [date]`
 4. **Generate 2-3 design options** with trade-offs for the key architectural decision. Present to human with a recommendation. Wait for input.
@@ -129,7 +129,7 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 - **LARGE:** after each top-level task, and once before marking the plan complete.
 - **TRIVIAL / SMALL:** skip. Not worth the overhead.
 
-**How to invoke.** Spawn a fresh sub-agent using Claude Code's Agent / Task primitive. Tell it: *"Run the `/focus:evaluate` command against the current branch. Return the verdict exactly in the specified format. You have no prior context — read `.focus/plan.md` and the diff yourself."* The evaluator's output format is defined in `commands/focus/evaluate.md`. Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
+**How to invoke.** Spawn a fresh sub-agent using Claude Code's Agent / Task primitive. Sub-agents cannot resolve slash commands — point it at the command **file**. Tell it: *"Read `~/.claude/commands/focus/evaluate.md` and follow its procedure exactly against the current branch. Return the verdict exactly in its specified format. You have no prior context — read `.focus/plan.md` and the diff yourself, and run each task's `Verify:` command fresh."* Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
 
 **What to do with the verdict.**
 - **PASS** — proceed to merge. Record any evaluator suggestions in log.md for next-session follow-up.
