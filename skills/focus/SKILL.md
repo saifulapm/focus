@@ -89,7 +89,7 @@ Before starting work, classify the task. This determines your process.
    - Read existing code in affected areas
    - Identify patterns, conventions, dependencies
    - Find constraints (what can't change, what breaks if you touch it)
-   - **2-Action Rule:** After every 2 file reads or searches, append a bullet to log.md summarizing what you found. Do not accumulate more than 2 results without saving.
+   - **Research Flush Rule:** Flush findings to log.md at the end of each research question, or after ~5 reads/searches — whichever comes first. For broad exploration, prefer dispatching a read-only sub-agent that writes findings to log.md, keeping raw file contents out of your context.
    - Document full findings in `.focus/log.md` under `### Research [date]`
 4. **Generate 2-3 design options** with trade-offs for the key architectural decision. Present to human with a recommendation. Wait for input.
 5. Create a feature branch: `git checkout -b feat/<task-slug>`
@@ -291,7 +291,7 @@ If your changes break passing tests: `git stash`, log it, tell the human, ask wh
 
 ## Context Health
 
-**2-Action Rule:** During research phases, after every 2 file reads or searches, append a bullet to log.md summarizing what you found. Do not accumulate more than 2 search results in context without saving.
+**Research Flush Rule:** During research phases, flush findings to log.md at the end of each research question, or after ~5 reads/searches — whichever comes first. Conclusions go to log.md; raw file contents are disposable.
 
 **3-Question Self-Check:** If you feel uncertain about the current state, answer these before continuing:
 1. What is the current task and which step am I on?
