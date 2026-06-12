@@ -106,6 +106,8 @@ Before starting work, classify the task. This determines your process.
 ### Escalation Rule
 If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
 
+**De-escalation:** if work collapses below its classification (a planned MEDIUM turns out to be a 2-line fix), drop to the lighter process: note the de-escalation and reason in log.md, finish under the new level's rules, delete plan.md if no longer warranted. The evaluator gate is waived only when the final level is below MEDIUM. Never de-escalate to dodge a failing evaluator — that is an escalation signal, not a scope change.
+
 ---
 
 ## Plan Templates
@@ -133,7 +135,7 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 
 **What to do with the verdict.**
 - **PASS** — proceed to merge. Record any evaluator suggestions in log.md for next-session follow-up.
-- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent every time). Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
+- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent every time), including the **prior evaluator report verbatim** in its prompt so it can run re-verification mode (full re-check of FAILED REQs, regression check on VERIFIED ones). Never include your own summary of the fixes. Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
 - **FAIL** — the plan itself is wrong, not just the code. Update plan.md, note the escalation in log.md, consider whether the task has become LARGE, then continue.
 - **UNCERTAIN** — the evaluator asked a specific question. Answer it in plan.md or log.md, then re-invoke.
 
@@ -422,6 +424,9 @@ Before claiming any task is done:
 8. Append a session entry to `.focus/journal/<YYYY-MM-DD>.md`.
 9. Update `.focus/memory.md` only if state changed (new principle / decision / open item).
 10. Delete `.focus/plan.md` and `.focus/log.md` (task done; the journal keeps the record).
+
+### Gated mode (opt-in)
+By default Focus never blocks a stop — the Stop hook is advisory. Projects that want enforcement create `.focus/mode` containing `gated` (committed): the Stop hook then blocks (exit 2) while plan.md has unchecked tasks, capped at 5 blocks per plan checkpoint. A written `## Handoff` always exempts — handing off is the sanctioned way to stop mid-plan.
 
 ### Retrospective (LARGE tasks only)
 After completing a LARGE task, append to today's journal file (`.focus/journal/<YYYY-MM-DD>.md`):
