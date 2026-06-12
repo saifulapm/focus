@@ -26,6 +26,9 @@
 | 2026-04-23 | Slash commands live under `commands/focus/` (not flat `commands/`) | Claude Code derives slash names from filename paths, not frontmatter `name:`; subdirectory produces `/focus:<cmd>` namespace |
 | 2026-04-23 | Any LARGE change to Focus itself MUST go through `.focus/plan.md` with atomic tasks + evaluator | v2 was built without dog-fooding its own rules; this guardrail prevents the blind spot recurring |
 | 2026-04-23 | Scope reduced to Claude Code only | User workflow is Claude-only; maintenance cost of 5-host support not justified. Removed: Cursor / Codex / OpenCode / Gemini install paths, brief-mode evaluator, evaluator-brief.sh. |
+| 2026-06-12 | PreToolUse injection throttled: every 5th Write/Edit/Bash call via `.focus/.toolcount`, counter resets on plan.md change, warns at 40+ | Repeated identical context degrades attention and wastes tokens (Anthropic article; planning-with-files v3 reached the same conclusion) |
+| 2026-06-12 | Handoffs are read-once: archived to log.md and deleted from plan.md on resumption | A consumed handoff left in plan.md gets re-injected as stale resume state |
+| 2026-06-12 | Hook discovery model: skill `description:` discovers Focus; hooks only surface state that exists | Per-prompt nag in non-Focus projects violated the lean principle |
 
 ## Principles
 - **MUST** keep SKILL.md under ~500 lines; push depth into `skills/focus/references/*.md` as it grows.
