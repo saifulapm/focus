@@ -52,6 +52,10 @@
 - [ ] Review hooks/instructions against current model capabilities every 3–6 months (next: 2026-09) — retire rules that compensate for weaknesses newer models no longer have
 - [ ] Phase 5 follow-up: scripted test for run.sh's failure path; warning/injection co-location nit in plan-tail.sh
 - [ ] Verify plugin install end-to-end (`/plugin marketplace add saifulapm/focus`) once pushed to GitHub
+- [ ] Consider: context-aware budget signal (GSD reads real context metrics; `.toolcount` is a proxy that miscounts read-heavy sessions)
+- [ ] Consider: `checkpoint: human-verify` task type for UI-shaped work ("Verify:" can't express "open localhost:3000 and check the modal")
+- [ ] Consider: optional subagent-per-task execution for LARGE (superpowers pattern) + spec-kit's 11-category clarification taxonomy for LARGE step 1
+- [ ] Consider: roadmap/backlog layer above single plans if a months-long product build starts (GSD/BMAD's strongest relevant feature)
 - [x] ~~Consider adding Windsurf, Kilo, and other agents~~ — out of scope 2026-04-23 (Claude-only)
 - [x] ~~Run `/focus:evaluate` retroactively against v2 diff as dog-food~~ — done 2026-04-23. Verdict: CHANGES REQUESTED (1 blocker + 3 suggestions + 3 nits). Issues 1-3 fixed that session; Issues 4-7 (Gemini files, templates/, stale install hint paths, README 5-host over-claim) resolved by the Claude-only scope reduction.
 - [x] ~~Clean up `skills/focus/templates/`~~ — done 2026-06-12 (improvement-plan Phase 6)

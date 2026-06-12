@@ -49,7 +49,7 @@ The prior report is evaluator output, not generator claims — using its VERIFIE
 
 Then check the **plan-level** items:
 
-- **Principles:** Run `bash "$CLAUDE_PLUGIN_ROOT/scripts/principles.sh"` (or `bash "$HOME/.claude/skills/focus/scripts/principles.sh"`) from the repo root. For each principle, ask: does the diff clearly violate this? Pay special attention to:
+- **Principles:** Load the merged principles by reading `.focus/memory.md`'s `## Principles` section plus `.focus/principles.md` if present. (The loader script `~/.claude/skills/focus/scripts/principles.sh` does this when available, but reading the two files directly is always sufficient — do not skip this check because a script path is missing.) For each principle, ask: does the diff clearly violate this? Pay special attention to:
   - **MUST NOT** principles — a single violation is a blocker.
   - **MUST** principles — if the diff contradicts the invariant, blocker.
   - **PREFER / AVOID** principles — violations are issues, not automatic blockers, but require explicit justification in the plan's Decisions section.

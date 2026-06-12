@@ -95,18 +95,27 @@ Before starting work, classify the task. This determines your process.
 5. Create a feature branch: `git checkout -b feat/<task-slug>`
 6. Create `.focus/plan.md` using the LARGE template (see `references/plans.md`). Every task must satisfy the Atomic Task Schema, and the Requirement → Task Map must be filled.
 7. **Self-review the plan** (the 9-item checklist in `references/plans.md`). Resolve any `[NEEDS CLARIFICATION]` markers before presenting.
-8. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
-9. Work through tasks in order. For each task: execute Action → run the task's `Verify:` command → confirm `Done when:` holds → commit using the task's `Commit:` message → check off → update log.md.
-10. **After each top-level task (and before marking the full plan complete), invoke the evaluator** (see Evaluator Gate below). LARGE plans tend to silently drift from requirements; per-task evaluation catches drift early. Address any `CHANGES REQUESTED` or `FAIL` verdict before continuing.
-11. Update `.focus/memory.md` with architectural decisions.
-12. Merge branch or offer to create PR: "Merge to main, or create a PR?"
-13. Run retrospective (see Completion Protocol).
-14. Delete `.focus/plan.md` when complete.
+8. **Independent plan check.** Spawn a fresh sub-agent: *"Read `.focus/plan.md` and adversarially review it against the 9-item Self-Review checklist in the focus skill's `references/plans.md`. Assume the plan is flawed; return a defect list with severity."* Fix defects before presenting. "Don't grade your own homework" applies to plans, not just diffs — a bad plan executed faithfully still passes the diff evaluator while missing the goal.
+9. **Present the plan and ask: "Any objections or adjustments?"** — wait for human response.
+10. Work through tasks in order. For each task: execute Action → run the task's `Verify:` command → confirm `Done when:` holds → commit using the task's `Commit:` message → check off → update log.md.
+11. **After each top-level task (and before marking the full plan complete), invoke the evaluator** (see Evaluator Gate below). LARGE plans tend to silently drift from requirements; per-task evaluation catches drift early. Address any `CHANGES REQUESTED` or `FAIL` verdict before continuing.
+12. Update `.focus/memory.md` with architectural decisions.
+13. Merge branch or offer to create PR: "Merge to main, or create a PR?"
+14. Run retrospective (see Completion Protocol).
+15. Delete `.focus/plan.md` when complete.
 
 ### Escalation Rule
 If a task grows beyond its classification (small touching 8 files → medium, medium with arch impact → large), escalate: create/update plan, re-ask human if now LARGE. Note escalation in log.md.
 
 **De-escalation:** if work collapses below its classification (a planned MEDIUM turns out to be a 2-line fix), drop to the lighter process: note the de-escalation and reason in log.md, finish under the new level's rules, delete plan.md if no longer warranted. The evaluator gate is waived only when the final level is below MEDIUM. Never de-escalate to dodge a failing evaluator — that is an escalation signal, not a scope change.
+
+### Discovered Work (deviation rules)
+Mid-execution discoveries are not failures; handle them by rule, and note each in log.md:
+1. **Bug blocking the current task** — fix it inline.
+2. **Missing critical correctness or security in scope** (input validation, error handling on the touched path) — add it inline.
+3. **New package needed** — never auto-install; hallucinated/typosquatted package names are an attack surface. Ask the human.
+4. **Out-of-scope discovery** — do NOT fix it; add it to memory.md Open Items.
+5. **Architectural change required** — stop and escalate to the human.
 
 ---
 
@@ -131,7 +140,7 @@ If a task grows beyond its classification (small touching 8 files → medium, me
 - **LARGE:** after each top-level task, and once before marking the plan complete.
 - **TRIVIAL / SMALL:** skip. Not worth the overhead.
 
-**How to invoke.** Spawn a fresh sub-agent using Claude Code's Agent / Task primitive. Sub-agents cannot resolve slash commands — point it at the command **file**. Tell it: *"Read `~/.claude/commands/focus/evaluate.md` and follow its procedure exactly against the current branch. Return the verdict exactly in its specified format. You have no prior context — read `.focus/plan.md` and the diff yourself, and run each task's `Verify:` command fresh."* Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
+**How to invoke.** Spawn a fresh sub-agent using Claude Code's Agent / Task primitive. Sub-agents cannot resolve slash commands — point it at the command **file**, and locate it first (the path differs by install): try `~/.claude/commands/focus/evaluate.md`; if absent (plugin install), find it with `find ~/.claude/plugins -name evaluate.md -path '*focus*' 2>/dev/null | head -1`. Then tell the sub-agent: *"Read `<verified absolute path>` and follow its procedure exactly against the current branch. Return the verdict exactly in its specified format. You have no prior context — read `.focus/plan.md` and the diff yourself, and run each task's `Verify:` command fresh."* Do not freelance the format; the generator needs a predictable structure to machine-read the verdict.
 
 **What to do with the verdict.**
 - **PASS** — proceed to merge. Record any evaluator suggestions in log.md for next-session follow-up.
@@ -423,7 +432,7 @@ Before claiming any task is done:
 7. Update `.focus/log.md` with final status (include the evaluator verdict summary).
 8. Append a session entry to `.focus/journal/<YYYY-MM-DD>.md`.
 9. Update `.focus/memory.md` only if state changed (new principle / decision / open item).
-10. Delete `.focus/plan.md` and `.focus/log.md` (task done; the journal keeps the record).
+10. **Archive, then delete.** Append a compact plan record to today's journal entry — Goal, REQs with final status, evaluator verdict, task → commit sha list — then delete `.focus/plan.md` and `.focus/log.md`. Plans are working files, but their evidence (what was required, what the evaluator verified, which commit delivered it) must survive in the journal.
 
 ### Gated mode (opt-in)
 By default Focus never blocks a stop — the Stop hook is advisory. Projects that want enforcement create `.focus/mode` containing `gated` (committed): the Stop hook then blocks (exit 2) while plan.md has unchecked tasks, capped at 5 blocks per plan checkpoint. A written `## Handoff` always exempts — handing off is the sanctioned way to stop mid-plan.
