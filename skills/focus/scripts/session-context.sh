@@ -103,7 +103,7 @@ if [ -f .focus/plan.md ]; then
       in_h { print }
     ' .focus/plan.md
     echo
-    echo '[focus] Start at "Exact next action". Archive the handoff to log.md, delete it from plan.md, then begin. Do not re-derive state.'
+    echo '[focus] Start at "Exact next action". First archive the handoff to log.md and delete it from plan.md (read-once). Do not re-derive state. Do not re-verify tasks already recorded with a commit sha.'
   else
     echo '=== [focus] Active Plan ==='
     awk '

@@ -47,7 +47,7 @@ t_missing  "full block drops resolved items" "$full" "resolved item"
 
 repeat=$(echo '{"session_id":"b1"}' | bash "$SCRIPTS/session-context.sh")
 rbytes=${#repeat}
-t "repeat prompt under 300 bytes (got $rbytes)" "$((rbytes <= 300))" "1"
+t "repeat prompt under 200 bytes (got $rbytes)" "$((rbytes <= 200))" "1"
 t_contains "repeat prompt keeps plan pointer" "$repeat" "Active plan:"
 
 # --- plan-tail: injection capped at 35 lines ---
