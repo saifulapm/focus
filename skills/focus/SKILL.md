@@ -374,10 +374,11 @@ Format:
 At session start, when `.focus/plan.md` exists:
 
 1. **Read the `## Handoff` section first** — if present, it is your ground truth. Trust it over any other cue.
-2. Read the rest of plan.md (Requirements, Design, task list) to understand the full scope.
-3. Read the last ~20 lines of log.md — specifically for the "what NOT to do" items the handoff references.
-4. Begin work at the **Exact next action**. Do not re-derive state from scratch. Do not re-verify tasks already marked with a commit sha in "Done so far" — trust the handoff.
-5. If the handoff's Exact next action is unclear or impossible (e.g., a file it references doesn't exist), stop and ask the user. A handoff that won't execute is a bug in the previous session, not something to paper over.
+2. **Archive it immediately** — append the handoff block to log.md under `### Consumed handoff <YYYY-MM-DD HH:MM>`, then delete the `## Handoff` section from plan.md. A handoff is read-once: leaving it in plan.md makes the hooks keep re-injecting stale resume state for the rest of the session.
+3. Read the rest of plan.md (Requirements, Design, task list) to understand the full scope.
+4. Read the last ~20 lines of log.md — specifically for the "what NOT to do" items the handoff references.
+5. Begin work at the **Exact next action**. Do not re-derive state from scratch. Do not re-verify tasks already marked with a commit sha in "Done so far" — trust the handoff.
+6. If the handoff's Exact next action is unclear or impossible (e.g., a file it references doesn't exist), stop and ask the user. A handoff that won't execute is a bug in the previous session, not something to paper over.
 
 ### Anti-patterns
 
@@ -385,6 +386,7 @@ At session start, when `.focus/plan.md` exists:
 - Do **not** skip the commit. An uncommitted handoff vanishes if the session crashes.
 - Do **not** accumulate handoff history in plan.md. Only the current handoff; log.md keeps the trail.
 - Do **not** resume a handoff while the previous context is still loaded. The whole point is a fresh start — use `/clear` or a new session.
+- Do **not** leave a consumed handoff in plan.md. Archiving it to log.md is your first action after reading it — otherwise hooks re-inject it on every cycle.
 - Do **not** leave a handoff in place after completing the plan. Delete plan.md (and with it the handoff) as part of the Completion Protocol.
 
 ---
