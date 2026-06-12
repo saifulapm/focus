@@ -423,6 +423,9 @@ Before claiming any task is done:
 9. Update `.focus/memory.md` only if state changed (new principle / decision / open item).
 10. Delete `.focus/plan.md` and `.focus/log.md` (task done; the journal keeps the record).
 
+### Gated mode (opt-in)
+By default Focus never blocks a stop — the Stop hook is advisory. Projects that want enforcement create `.focus/mode` containing `gated` (committed): the Stop hook then blocks (exit 2) while plan.md has unchecked tasks, capped at 5 blocks per plan checkpoint. A written `## Handoff` always exempts — handing off is the sanctioned way to stop mid-plan.
+
 ### Retrospective (LARGE tasks only)
 After completing a LARGE task, append to today's journal file (`.focus/journal/<YYYY-MM-DD>.md`):
 ```

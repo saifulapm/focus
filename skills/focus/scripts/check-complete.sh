@@ -1,6 +1,12 @@
 #!/bin/bash
 # Focus completion checker — runs on Stop hook
-# Warns if plan.md has unchecked phases, clarification blockers, or schema gaps
+# Warns if plan.md has unchecked phases, clarification blockers, or schema gaps.
+# Advisory by default; opt-in gated mode (.focus/mode containing "gated")
+# blocks stopping while unchecked tasks remain — capped, handoff-exempt.
+
+# Hook input arrives as JSON on stdin (contains stop_hook_active).
+input=""
+[ -t 0 ] || input=$(cat 2>/dev/null)
 
 if [ ! -f .focus/plan.md ]; then
   exit 0
@@ -127,12 +133,33 @@ if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
   fi
 fi
 
-# --- Memory freshness reminder ---
-if [ -f .focus/memory.md ]; then
-  last_modified=$(stat -f %m .focus/memory.md 2>/dev/null || stat -c %Y .focus/memory.md 2>/dev/null || echo 0)
-  now=$(date +%s)
-  age=$((now - last_modified))
-  if [ "$age" -gt 120 ]; then
-    echo "[focus] Reminder: Update .focus/memory.md with session summary before stopping."
+# --- Session-end journal reminder ---
+today=$(date +%Y-%m-%d)
+if [ ! -f ".focus/journal/$today.md" ]; then
+  echo "[focus] No journal entry for today — append a session entry to .focus/journal/$today.md before ending (see Session End)."
+fi
+
+# --- Gated mode (opt-in) ---
+# Blocks stopping while unchecked tasks remain. Safeguards: never when the
+# harness signals stop_hook_active (prevents loops), never when a ## Handoff
+# exists (the sanctioned way to stop mid-plan), capped at 5 blocks per plan
+# checkpoint (.stopblocks resets when plan.md changes — stall protection).
+if [ -f .focus/mode ] && grep -q '^gated' .focus/mode 2>/dev/null \
+   && [ "$incomplete" -gt 0 ] \
+   && ! grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+  if echo "$input" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
+    exit 0
+  fi
+  bf=".focus/.stopblocks"
+  if [ ! -f "$bf" ] || [ .focus/plan.md -nt "$bf" ]; then
+    blocks=0
+  else
+    blocks=$(cat "$bf" 2>/dev/null)
+    case "$blocks" in ''|*[!0-9]*) blocks=0 ;; esac
+  fi
+  if [ "$blocks" -lt 5 ]; then
+    echo $((blocks + 1)) > "$bf"
+    echo "[focus] Gated mode: $incomplete unchecked task(s) in .focus/plan.md. Finish them, emit /focus:handoff, or remove .focus/mode to disable gating. (block $((blocks + 1))/5)" >&2
+    exit 2
   fi
 fi
