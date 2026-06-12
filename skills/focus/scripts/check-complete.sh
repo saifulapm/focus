@@ -21,9 +21,12 @@ if [ "$incomplete" -gt 0 ]; then
   echo ""
   echo "[focus] === INCOMPLETE PLAN ==="
   echo "[focus] $done/$total checkboxes complete. $incomplete remaining:"
-  grep '^- \[ \]' .focus/plan.md 2>/dev/null | while read -r line; do
+  grep '^- \[ \]' .focus/plan.md 2>/dev/null | head -10 | while read -r line; do
     echo "[focus]   $line"
   done
+  if [ "$incomplete" -gt 10 ]; then
+    echo "[focus]   ...and $((incomplete - 10)) more"
+  fi
   echo "[focus] Verify all work is done before stopping."
   echo ""
 fi
