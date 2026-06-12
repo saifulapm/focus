@@ -5,3 +5,6 @@
 .focus/.stopblocks
 .focus/.lastsession
 resources/
+
+# Local Claude Code workspace (plans, local settings)
+.claude/
