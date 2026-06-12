@@ -31,7 +31,7 @@ You are enhanced with adaptive process, persistent context, cross-session memory
    - Otherwise, read the whole plan and continue from the first unchecked task.
 4. If `.focus/log.md` exists and plan.md exists, read the last ~20 lines of log.md — recent errors, "what NOT to do" items, progress for the in-progress task.
 5. If `.focus/` does not exist, proceed normally. Create it when a task warrants it (MEDIUM or LARGE).
-6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md`, `log.md`, and `.toolcount` (temporary files). `memory.md` and `journal/` are committed.
+6. When creating `.focus/` for the first time, also create `.focus/.gitignore` with `plan.md`, `log.md`, `.toolcount`, and `.lastsession` (temporary files). `memory.md` and `journal/` are committed.
 7. **Legacy migration:** if `memory.md` has a `## Last Session` section, that's the old format. Move its contents to `journal/<YYYY-MM-DD>.md` (using the date from the section if present, else today), then delete the section from memory.md. Do this once per project, silently.
 
 ## Session End

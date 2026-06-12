@@ -1,50 +1,80 @@
 #!/bin/bash
-# Focus session context injector — runs on UserPromptSubmit / session-start.
+# Focus session context injector — runs on UserPromptSubmit.
 #
-# Prints a compact context block so the agent sees active-plan state even if
-# it hasn't re-invoked the skill yet. Handoff-aware: when plan.md contains a
-# ## Handoff section, surface that section instead of the plan head, because
-# the handoff is the ground truth for a resuming agent.
+# Context economy: the full state block is injected ONCE per session — the
+# agent keeps it in context from the first prompt; re-sending it every
+# prompt is pure duplication. Subsequent prompts get a 1-2 line refresh.
+# Session identity comes from the hook's stdin JSON; /clear or a new
+# session issues a new id, which brings the full block back.
 #
 # Silent in projects without .focus/ — skill discovery is the job of the
 # skill's description field, not a per-prompt nag. The hook only surfaces
 # state that actually exists.
+#
+# Handoff-aware: when plan.md contains a ## Handoff section, surface that
+# section instead of the plan head — it is the ground truth for a resuming
+# agent and the one block that must be complete.
 
 [ -d .focus ] || exit 0
 
-echo "[focus] Now: $(date '+%Y-%m-%d %H:%M'). Use this timestamp for log/journal entries. Invoke the focus skill before coding work."
+input=""
+[ -t 0 ] || input=$(cat 2>/dev/null)
+session_id=$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
 
-# Surface the two sections most load-bearing for a fresh session:
-# Principles (via the shared loader so .focus/principles.md is honored too)
-# and Open Items (unique to memory.md).
+now=$(date '+%Y-%m-%d %H:%M')
+
+# --- Repeat prompt in the same session: 1-2 line refresh only ---
+if [ -n "$session_id" ] && [ -f .focus/.lastsession ] \
+   && [ "$session_id" = "$(cat .focus/.lastsession 2>/dev/null)" ]; then
+  echo "[focus] Now: $now."
+  if [ -f .focus/plan.md ]; then
+    goal=$(grep -m1 '^\*\*Goal:\*\*' .focus/plan.md)
+    echo "[focus] Active plan: ${goal#\*\*Goal:\*\* } — read .focus/plan.md if unsure of state."
+  fi
+  exit 0
+fi
+[ -n "$session_id" ] && printf '%s' "$session_id" > .focus/.lastsession
+
+echo "[focus] Now: $now. Use this timestamp for log/journal entries. Invoke the focus skill before coding work."
+
+# --- Memory: principles + UNCHECKED open items only (struck/done = noise) ---
 dir="$(dirname "$0")"
 principles=$(bash "$dir/principles.sh" 2>/dev/null)
-if [ -n "$principles" ] || { [ -f .focus/memory.md ] && grep -q '^## Open Items' .focus/memory.md 2>/dev/null; }; then
+open_items=""
+if [ -f .focus/memory.md ]; then
+  open_items=$(awk '
+    /^## Open Items/ { in_o = 1; next }
+    in_o && /^## /   { in_o = 0 }
+    in_o             { print }
+  ' .focus/memory.md | grep '^- \[ \]' | head -8)
+fi
+if [ -n "$principles" ] || [ -n "$open_items" ]; then
   echo
   echo '=== [focus] Memory (current state) ==='
   if [ -n "$principles" ]; then
     echo "$principles"
     echo
   fi
-  if [ -f .focus/memory.md ]; then
-    awk '
-      /^## Open Items/ { in_o = 1; print; next }
-      in_o && /^## /   { in_o = 0 }
-      in_o             { print }
-    ' .focus/memory.md | head -15
+  if [ -n "$open_items" ]; then
+    echo '## Open Items (unchecked)'
+    echo "$open_items"
   fi
   echo
 fi
 
-# --- Journal: show the most recent entries (up to 2 days) ---
+# --- Journal: newest file tail; previous file headings only ---
 if [ -d .focus/journal ]; then
-  latest=$(ls -1 .focus/journal/ 2>/dev/null | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$' | sort | tail -2)
-  if [ -n "$latest" ]; then
+  files=$(ls -1 .focus/journal/ 2>/dev/null | grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$' | sort | tail -2)
+  newest=$(echo "$files" | tail -1)
+  prev=$(echo "$files" | head -1)
+  if [ -n "$newest" ]; then
     echo '=== [focus] Recent journal (what happened last) ==='
-    for f in $latest; do
-      echo "--- .focus/journal/$f ---"
-      tail -30 ".focus/journal/$f"
-    done
+    if [ -n "$prev" ] && [ "$prev" != "$newest" ]; then
+      echo "--- .focus/journal/$prev (headings) ---"
+      grep '^## ' ".focus/journal/$prev" | head -6
+    fi
+    echo "--- .focus/journal/$newest ---"
+    tail -20 ".focus/journal/$newest"
     echo
   fi
 fi
@@ -73,10 +103,21 @@ if [ -f .focus/plan.md ]; then
       in_h { print }
     ' .focus/plan.md
     echo
-    echo '[focus] Start at "Exact next action". Do not re-derive state. Do not re-verify tasks already recorded with a commit sha.'
+    echo '[focus] Start at "Exact next action". Archive the handoff to log.md, delete it from plan.md, then begin. Do not re-derive state.'
   else
     echo '=== [focus] Active Plan ==='
-    head -20 .focus/plan.md
+    awk '
+      function flush() {
+        if (intask && has) { printf "%s", sec; found = 1 }
+        intask = 0; sec = ""; has = 0
+      }
+      /^## /       { flush(); if (found) exit }
+      /^### Task / { flush(); if (found) exit; intask = 1 }
+      intask       { sec = sec $0 "\n"; if ($0 ~ /^- \[ \]/) has = 1 }
+      /^\*\*Goal:\*\*/  && !intask { print }
+      /^\*\*Level:\*\*/ && !intask { print }
+      END { flush() }
+    ' .focus/plan.md | head -30
   fi
   echo
 
