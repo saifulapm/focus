@@ -38,6 +38,15 @@ For each **REQ** in the plan:
 4. **Run the verification** — find the task's `Verify:` command, run it fresh, check exit code. If there is no test for the REQ, say so (that is a gap, not a pass).
 5. **Verdict per REQ:** `VERIFIED` | `FAILED` | `UNCERTAIN` — with one sentence of evidence.
 
+## Re-verification mode
+
+If your spawn prompt includes a **prior evaluator report** (you are re-verifying after CHANGES REQUESTED), scope the work:
+
+- REQs previously `FAILED` or `UNCERTAIN`: run the **full procedure** above.
+- REQs previously `VERIFIED`: run a **regression check only** — the implementing artifact is still present and the task's `Verify:` command exits 0. Report them as `VERIFIED (regression)`. If a regression check fails, escalate that REQ to the full procedure.
+
+The prior report is evaluator output, not generator claims — using its VERIFIED entries to scope depth does not violate the cold-read rule, because every REQ still gets a fresh command run. If the spawn prompt instead summarizes the generator's fixes, ignore that summary and evaluate from the diff.
+
 Then check the **plan-level** items:
 
 - **Principles:** Run `bash "$CLAUDE_PLUGIN_ROOT/scripts/principles.sh"` (or `bash "$HOME/.claude/skills/focus/scripts/principles.sh"`) from the repo root. For each principle, ask: does the diff clearly violate this? Pay special attention to:
