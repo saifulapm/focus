@@ -63,6 +63,9 @@ Tasks escalate mid-work if they turn out bigger than expected.
     2026-04-20.md
   plan.md              # gitignored — active task's plan (deleted on completion)
   log.md               # gitignored — active task's tool-call trail
+  .toolcount           # gitignored — hook counter for throttled injection + handoff budget
+  .stopblocks          # gitignored — gated-mode block counter
+  mode                 # optional, committed — contains "gated" to enable the blocking Stop hook
   principles.md        # optional, committed — for projects that want principles isolated
 ```
 
