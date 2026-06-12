@@ -52,7 +52,7 @@
 - [ ] Publish to npm for `npx skills add`-style install
 - [ ] Review hooks/instructions against current model capabilities every 3–6 months (next: 2026-09) — retire rules that compensate for weaknesses newer models no longer have
 - [ ] Phase 5 follow-up: scripted test for run.sh's failure path; warning/injection co-location nit in plan-tail.sh
-- [ ] Verify plugin install end-to-end: run `/plugin marketplace add saifulapm/focus` then `/plugin install focus@focus` (repo is pushed; marketplace.json confirmed fetchable 2026-06-12; only the interactive install step remains)
+- [x] ~~Verify plugin install end-to-end~~ — done 2026-06-12: marketplace add + install worked; exposed the `/focus:focus:*` namespacing bug, fixed in v2.1.1 (flat `commands/`); script-install duplicates removed from `~/.claude` — plugin is now the sole install
 - [ ] Consider: context-aware budget signal (GSD reads real context metrics; `.toolcount` is a proxy that miscounts read-heavy sessions)
 - [ ] Consider: `checkpoint: human-verify` task type for UI-shaped work ("Verify:" can't express "open localhost:3000 and check the modal")
 - [ ] Consider: optional subagent-per-task execution for LARGE (superpowers pattern) + spec-kit's 11-category clarification taxonomy for LARGE step 1
