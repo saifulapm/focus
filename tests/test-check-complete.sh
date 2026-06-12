@@ -56,7 +56,7 @@ cc '{"stop_hook_active": true}' >/dev/null; rc=$?
 t "stop_hook_active exempt" "$rc" "0"
 
 printf '5' > .focus/.stopblocks
-touch -t 202612312359 .focus/.stopblocks   # keep counter newer than plan: no reset
+touch -t 202601010000 .focus/plan.md   # plan older than counter: no reset, at any future date
 cc >/dev/null; rc=$?
 t "5-block cap allows stop" "$rc" "0"
 
