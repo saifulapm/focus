@@ -403,6 +403,8 @@ Focus keeps two persistent files plus a per-task scratchpad:
 
 The split is load-bearing: mixing state and narrative in one file means future agents can't tell which bullets still describe reality. Never write "Last Session" into memory.md; never edit past journal entries; never delete log.md mid-task.
 
+memory.md is not CLAUDE.md: stable conventions every session needs (build commands, architecture map, style) belong in CLAUDE.md; memory.md holds Focus's evolving state. When a Project Context bullet stabilizes, promote it to CLAUDE.md (see `references/memory.md`).
+
 **Read `skills/focus/references/memory.md`** when writing to memory.md or journal/ at session end, when pruning, or when migrating a legacy `## Last Session` section — it has the formats, field templates, and the migration procedure.
 
 ---
@@ -428,6 +430,7 @@ After completing a LARGE task, append to today's journal file (`.focus/journal/<
 - What went well: <1-2 points>
 - What went poorly: <1-2 points>
 - Change for next time: <1 actionable improvement>
+- Navigation friction: <anything hard to find or understand that a CLAUDE.md line or codebase map would fix? Propose the exact line, or "none">
 ```
 
 ## Anti-Patterns

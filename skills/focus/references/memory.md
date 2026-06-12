@@ -60,6 +60,22 @@ Note: there is no `## Last Session` section in the new format. Session narrative
 - Temporary debugging state.
 - Per-session summaries — those go in journal/.
 - "What I did today" — that goes in journal/.
+- Stable project conventions every agent/session needs — those belong in CLAUDE.md (see below).
+
+## memory.md vs CLAUDE.md
+
+Both persist across sessions; they answer different questions.
+
+| | CLAUDE.md | .focus/memory.md |
+|---|---|---|
+| Audience | Every Claude session in this repo, Focus or not | Focus's process state |
+| Content | Stable conventions: build/test commands, architecture map, directory guide, code style | Decisions with rationale, principles, open items, evolving context |
+| Loaded | Automatically, every session | By Focus at session start |
+| Shape | Lean and layered (root for the big picture, subdirectory CLAUDE.md for local conventions) | Small and authoritative; pruned per the rules above |
+
+**Promotion rule:** when a `Project Context` bullet stabilizes into something any agent needs ("tests run with `pnpm vitest`", "API handlers live in `src/routes/`"), move it to CLAUDE.md and delete it here. memory.md holds what is still in motion; CLAUDE.md holds what has settled.
+
+**Navigation friction is a signal:** if research kept stumbling — wrong directory guesses, repeated greps for the same thing, misunderstood module boundaries — the fix is usually a CLAUDE.md line or a short codebase map, not a memory.md note. The LARGE retrospective asks this explicitly.
 
 ## journal/
 
