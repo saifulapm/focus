@@ -49,15 +49,15 @@ Before the conversation ends:
 Focus enters **Track Mode** when work arrives pre-planned from the ship pipeline. Detect it at session start — any of:
 
 - the working directory is inside `.worktrees/`
-- the current branch matches `track/*` or is `foundation`
+- the current branch matches `track/*` or is `foundation` **and** `docs/plan/ROADMAP.md` exists (the guard prevents false positives in repos that just happen to use those branch names)
 - the task is to execute a `docs/plan/tracks/*.md` brief, a ROADMAP Phase 0, or a published plan's issue (`docs/plan/protocol.md` exists)
 
 In Track Mode the brief IS the approved plan — research, grilling, spec, adversarial plan review, and human approval already happened upstream. The normal MEDIUM/LARGE ceremony would re-litigate settled decisions. These rules replace it:
 
-1. **No re-planning ceremony.** Skip clarifying questions, preference capture, design options, and plan-presentation waits (LARGE steps 1, 2, 4, 9; MEDIUM step 5). Create `.focus/plan.md` directly from the brief's tasks — they already satisfy the Atomic Task Schema. Copy each of the brief's `Ask before Task N` entries into plan.md as a `[NEEDS CLARIFICATION: <question>]` marker on that task — it blocks that task until the human answers. If the brief itself is ambiguous or a required field can't be filled without guessing, write `[NEEDS CLARIFICATION]`, STOP, and ask the human — never guess, and never improvise around a defective brief: it's a planning bug to report, not to patch locally.
+1. **No re-planning ceremony.** Skip clarifying questions, preference capture, design options, the independent plan check, and plan-presentation waits (LARGE steps 1, 2, 4, 8, 9; MEDIUM step 5) — the brief was adversarially reviewed and approved at plan time. Run every brief as **MEDIUM-process** (evaluator once at completion; for briefs with many independent top-level tasks, evaluate per task as LARGE does). Create `.focus/plan.md` directly from the brief's tasks — they already satisfy the Atomic Task Schema. Copy each of the brief's `Ask before Task N` entries into plan.md as a `[NEEDS CLARIFICATION: <question>]` marker on that task — it blocks **that task only** until the human answers. **Continuing a published in-progress issue:** recreate plan.md from the issue body, check off the tasks the latest handoff comment lists with commit shas (don't re-verify them), treat that comment as the `## Handoff` ground truth, and act on its Exact next action. If the brief itself is ambiguous or a required field can't be filled without guessing, write `[NEEDS CLARIFICATION]`, STOP, and ask the human — never guess, and never improvise around a defective brief: it's a planning bug to report, not to patch locally.
 2. **The current branch is the feature branch.** Never `git checkout -b feat/*`. Commit each task directly on the current branch.
 3. **Completion = report, not merge.** Done = all tasks verified + evaluator PASS → report "ready to merge" with the open-items and decisions list. Never merge to main, with two scoped exceptions: on a published plan (`docs/plan/protocol.md` exists), *opening* — never merging — the PR per the protocol's REVIEW step is part of the report; and foundation built locally is merged via run-tracks Mode A step 3 after its exit criteria hold with the user's explicit approval.
-4. **`.focus/` stays out of git.** Skip every `git add .focus/` commit (Session End step 4, the handoff commit): plan.md and log.md live on disk only. Do NOT write to memory.md or journal/ on a work branch — this overrides Session End steps 1–2, Completion Protocol steps 8–10, and the LARGE retrospective. Fold the Completion step-10 plan record (REQs with status, evaluator verdict, task → commit shas) plus decisions and open items into the ready-to-merge report instead; the orchestrator archives them on main. Durable handoffs: if `docs/plan/protocol.md` exists, push the branch and post the handoff block as a comment on the claimed issue (`gh issue comment`); otherwise the on-disk plan.md handoff suffices.
+4. **`.focus/` stays out of git.** Skip every `git add .focus/` commit (Session End step 4, the handoff commit): plan.md and log.md live on disk only. Do NOT write to memory.md or journal/ on a work branch — this overrides Session End steps 1–2, Completion Protocol steps 8–10, and the LARGE retrospective. Fold the Completion step-10 plan record (REQs with status, evaluator verdict, task → commit shas) plus decisions and open items into the ready-to-merge report instead — on a published plan, post that report as an issue comment (the issue is the permanent archive). Still delete plan.md/log.md when the work completes. Durable handoffs: if `docs/plan/protocol.md` exists, push the branch and post the handoff block as a comment on the claimed issue (`gh issue comment`); otherwise the on-disk plan.md handoff suffices.
 5. **Per-task skills.** If a task carries a `Skills:` field, invoke each listed skill (Skill tool) before executing that task — the plan chose them deliberately; don't substitute from memory or skip them.
 
 Everything else applies unchanged: the Verify/Done-when discipline, Failure Handling, Systematic Debugging, the **Evaluator Gate (still mandatory** — it evaluates against the brief's requirements), Context Health, and the 3-Question Self-Check.
@@ -143,11 +143,11 @@ Mid-execution discoveries are not failures; handle them by rule, and note each i
 
 **Every plan task uses the Atomic Task Schema:** required fields are **Files, Action, Verify, Done when, Commit**. Optional field: **Skills** — skills to invoke (Skill tool) before executing the task; honor it in every mode. A task missing any required field is not ready to execute. `Verify` must be a runnable command; `Done when` must be an observable signal (not "looks right"). One commit per task.
 
-**Before execution:** if any required field can't be filled without guessing, write `[NEEDS CLARIFICATION: <question>]` in place. Any such marker blocks execution until resolved with the human.
+**Before execution:** if any required field can't be filled without guessing, write `[NEEDS CLARIFICATION: <question>]` in place. Any such marker blocks execution until resolved with the human (exception: Track Mode's per-task `Ask before Task N` markers block only their own task).
 
 **Before presenting a MEDIUM/LARGE plan:** run the 9-item Plan Self-Review.
 
-**Read `skills/focus/references/plans.md`** when creating or reviewing a plan — it has the full MEDIUM and LARGE templates, the no-placeholders rule, and the Self-Review checklist.
+**Read `references/plans.md`** when creating or reviewing a plan — it has the full MEDIUM and LARGE templates, the no-placeholders rule, and the Self-Review checklist.
 
 ---
 
@@ -254,7 +254,7 @@ Before claiming any task, phase, or the full work is done:
 
 Summary: **Investigate → Analyze → Hypothesize → Fix**, one variable at a time. Do NOT skip to fixes. If 3+ fixes failed in a row, question the architecture with the human.
 
-**Read `skills/focus/references/debugging.md`** when a `Verify:` fails or behavior is unexpected — it has the full four-phase procedure and debugging anti-patterns.
+**Read `references/debugging.md`** when a `Verify:` fails or behavior is unexpected — it has the full four-phase procedure and debugging anti-patterns.
 
 ---
 
@@ -316,7 +316,7 @@ If your changes break passing tests: `git stash`, log it, tell the human, ask wh
 - **MEDIUM/LARGE:** tests are part of the work — prefer test-first, verify no regressions.
 - **Code review (not writing code):** read the diff end-to-end; categorize as Blocking / Suggestion / Nit.
 
-**Read `skills/focus/references/testing-and-review.md`** when writing tests for a MEDIUM/LARGE task or when asked to review a PR — it has the per-level testing rules, what counts as a real test, and the review procedure with anti-patterns.
+**Read `references/testing-and-review.md`** when writing tests for a MEDIUM/LARGE task or when asked to review a PR — it has the per-level testing rules, what counts as a real test, and the review procedure with anti-patterns.
 
 ---
 
@@ -436,7 +436,7 @@ The split is load-bearing: mixing state and narrative in one file means future a
 
 memory.md is not CLAUDE.md: stable conventions every session needs (build commands, architecture map, style) belong in CLAUDE.md; memory.md holds Focus's evolving state. When a Project Context bullet stabilizes, promote it to CLAUDE.md (see `references/memory.md`).
 
-**Read `skills/focus/references/memory.md`** when writing to memory.md or journal/ at session end, when pruning, or when migrating a legacy `## Last Session` section — it has the formats, field templates, and the migration procedure.
+**Read `references/memory.md`** when writing to memory.md or journal/ at session end, when pruning, or when migrating a legacy `## Last Session` section — it has the formats, field templates, and the migration procedure.
 
 ---
 
@@ -472,7 +472,7 @@ After completing a LARGE task, append to today's journal file (`.focus/journal/<
 - Do NOT use Claude Code's built-in plan mode (EnterPlanMode). Write plans directly to `.focus/plan.md` using the templates above. Focus manages its own planning.
 - Do NOT create plan.md for trivial/small tasks.
 - Do NOT write a task without all five required fields (Files, Action, Verify, Done when, Commit).
-- Do NOT start execution while any `[NEEDS CLARIFICATION]` marker remains in plan.md.
+- Do NOT start execution while any `[NEEDS CLARIFICATION]` marker remains in plan.md (Track Mode's per-task `Ask before Task N` markers block only their own task).
 - Do NOT ask the human for approval on obvious changes.
 - Do NOT retry a failed approach without logging what failed first.
 - Do NOT claim done without running the task's `Verify:` command and confirming its `Done when:` criterion.
