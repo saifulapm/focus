@@ -44,6 +44,26 @@ Before the conversation ends:
 
 ---
 
+## Track Mode (brief-driven execution)
+
+Focus enters **Track Mode** when work arrives pre-planned from the ship pipeline. Detect it at session start — any of:
+
+- the working directory is inside `.worktrees/`
+- the current branch matches `track/*` or is `foundation`
+- the task is to execute a `docs/plan/tracks/*.md` brief, a ROADMAP Phase 0, or a published plan's issue (`docs/plan/protocol.md` exists)
+
+In Track Mode the brief IS the approved plan — research, grilling, spec, adversarial plan review, and human approval already happened upstream. The normal MEDIUM/LARGE ceremony would re-litigate settled decisions. These rules replace it:
+
+1. **No re-planning ceremony.** Skip clarifying questions, preference capture, design options, and plan-presentation waits (LARGE steps 1, 2, 4, 9; MEDIUM step 5). Create `.focus/plan.md` directly from the brief's tasks — they already satisfy the Atomic Task Schema. If the brief itself is ambiguous or a required field can't be filled without guessing, write `[NEEDS CLARIFICATION]`, STOP, and ask the human — never guess, and never improvise around a defective brief: it's a planning bug to report, not to patch locally.
+2. **The current branch is the feature branch.** Never `git checkout -b feat/*`. Commit each task directly on the current branch.
+3. **Completion = report, not merge.** Never merge to main or offer a PR. Done = all tasks verified + evaluator PASS → report "ready to merge" with the open-items and decisions list. Integration belongs to the orchestrator's merge protocol — or, on a published plan, to a human-merged PR.
+4. **`.focus/` stays out of git.** Skip every `git add .focus/` commit (Session End step 4, the handoff commit): plan.md and log.md live on disk only. Do NOT write to memory.md or journal/ on a work branch — decisions and open items go in the ready-to-merge report; the orchestrator folds them into main's memory. Durable handoffs: if `docs/plan/protocol.md` exists, push the branch and post the handoff block as a comment on the claimed issue (`gh issue comment`); otherwise the on-disk plan.md handoff suffices.
+5. **Per-task skills.** If a task carries a `Skills:` field, invoke each listed skill (Skill tool) before executing that task — the plan chose them deliberately; don't substitute from memory or skip them.
+
+Everything else applies unchanged: the Verify/Done-when discipline, Failure Handling, Systematic Debugging, the **Evaluator Gate (still mandatory** — it evaluates against the brief's requirements), Context Health, and the 3-Question Self-Check.
+
+---
+
 ## Classify Every Task
 
 Before starting work, classify the task. This determines your process.
@@ -121,7 +141,7 @@ Mid-execution discoveries are not failures; handle them by rule, and note each i
 
 ## Plan Templates
 
-**Every plan task uses the Atomic Task Schema:** required fields are **Files, Action, Verify, Done when, Commit**. A task missing any of these is not ready to execute. `Verify` must be a runnable command; `Done when` must be an observable signal (not "looks right"). One commit per task.
+**Every plan task uses the Atomic Task Schema:** required fields are **Files, Action, Verify, Done when, Commit**. Optional field: **Skills** — skills to invoke (Skill tool) before executing the task; honor it in every mode. A task missing any required field is not ready to execute. `Verify` must be a runnable command; `Done when` must be an observable signal (not "looks right"). One commit per task.
 
 **Before execution:** if any required field can't be filled without guessing, write `[NEEDS CLARIFICATION: <question>]` in place. Any such marker blocks execution until resolved with the human.
 
