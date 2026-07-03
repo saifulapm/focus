@@ -6,16 +6,16 @@ hooks:
   UserPromptSubmit:
     - hooks:
         - type: command
-          command: "s=session-context.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
+          command: "s=session-context.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && exec bash \"$p\"; done; exit 0"
   PreToolUse:
     - matcher: "Write|Edit|Bash"
       hooks:
         - type: command
-          command: "s=plan-tail.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
+          command: "s=plan-tail.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && exec bash \"$p\"; done; exit 0"
   Stop:
     - hooks:
         - type: command
-          command: "s=check-complete.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && bash \"$p\" && break; done"
+          command: "s=check-complete.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && exec bash \"$p\"; done; exit 0"
 ---
 
 # Focus
