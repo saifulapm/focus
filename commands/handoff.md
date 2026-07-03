@@ -24,14 +24,16 @@ Procedure:
    - Principles still in force (copy the subset from memory.md actually relevant to the remaining work)
    - What NOT to do (approaches already tried and failed, mined from log.md)
 
-4. **Commit.** Run:
+4. **Make it durable.**
+   - **Track Mode** (worktree / `track/*` or `foundation` branch / published plan — see the focus skill's Track Mode rule 4): do NOT commit `.focus/` files. Push the current branch; on a published plan (`docs/plan/protocol.md` exists) also post the handoff block as a comment on the claimed issue (`gh issue comment`).
+   - **Otherwise, commit:**
    ```
-   git add .focus/plan.md .focus/log.md
+   git add -f .focus/plan.md .focus/log.md
    git commit -m "focus: handoff at task <N> — <reason>"
    ```
-   The commit is essential — without it the handoff vanishes if the session crashes.
+   The `-f` is required (plan.md/log.md are gitignored by `.focus/.gitignore`; this commit is the one sanctioned exception). The commit is essential — without it the handoff vanishes if the session crashes.
 
-5. **Tell the user, verbatim:**
+5. **Tell the user, verbatim** (adjust "committed" to "pushed / posted on issue #NN" in Track Mode):
    ```
    Handoff written to .focus/plan.md (§Handoff) and committed.
    Recommend: /clear, then start a fresh session. The new agent will read the handoff and continue from the Exact next action.

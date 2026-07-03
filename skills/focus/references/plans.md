@@ -2,6 +2,8 @@
 
 Load this file when creating or reviewing a `.focus/plan.md` (MEDIUM or LARGE). It is the detailed specification for the Atomic Task Schema, plan templates, clarification blockers, the no-placeholders rule, and the 9-item Plan Self-Review. SKILL.md references this file at the moments a plan is authored; nothing here is relevant until then.
 
+Track Mode plans (built from a brief, not these templates) additionally carry the brief's requirements list as their Requirements section and the brief's `## Session blocks` section verbatim — Track Mode rules 1 and 6 depend on both being in plan.md.
+
 ---
 
 Every task in a plan is **atomic**: one reviewer can execute it without asking questions, and one command can prove it worked.

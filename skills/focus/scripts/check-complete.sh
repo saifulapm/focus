@@ -18,17 +18,25 @@ done=$(grep -c '^- \[x\]' .focus/plan.md 2>/dev/null); done=${done:-0}
 incomplete=$((total - done))
 
 if [ "$incomplete" -gt 0 ]; then
-  echo ""
-  echo "[focus] === INCOMPLETE PLAN ==="
-  echo "[focus] $done/$total checkboxes complete. $incomplete remaining:"
-  grep '^- \[ \]' .focus/plan.md 2>/dev/null | head -10 | while read -r line; do
-    echo "[focus]   $line"
-  done
-  if [ "$incomplete" -gt 10 ]; then
-    echo "[focus]   ...and $((incomplete - 10)) more"
+  if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+    # A handoff is the sanctioned way to stop mid-plan (session-block
+    # boundaries, context budget) — don't imply the stop is wrong.
+    echo ""
+    echo "[focus] $done/$total tasks complete — handoff in place; stopping here is sanctioned. Next session resumes from plan.md §Handoff."
+    echo ""
+  else
+    echo ""
+    echo "[focus] === INCOMPLETE PLAN ==="
+    echo "[focus] $done/$total checkboxes complete. $incomplete remaining:"
+    grep '^- \[ \]' .focus/plan.md 2>/dev/null | head -10 | while read -r line; do
+      echo "[focus]   $line"
+    done
+    if [ "$incomplete" -gt 10 ]; then
+      echo "[focus]   ...and $((incomplete - 10)) more"
+    fi
+    echo "[focus] Verify all work is done before stopping, or emit a handoff."
+    echo ""
   fi
-  echo "[focus] Verify all work is done before stopping."
-  echo ""
 fi
 
 # --- Clarification blockers ---
@@ -137,9 +145,19 @@ if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
 fi
 
 # --- Session-end journal reminder ---
-today=$(date +%Y-%m-%d)
-if [ ! -f ".focus/journal/$today.md" ]; then
-  echo "[focus] No journal entry for today — append a session entry to .focus/journal/$today.md before ending (see Session End)."
+# Skipped in Track Mode (rule 4 forbids journal/memory writes on work branches).
+in_track=0
+case "$PWD" in */.worktrees/*) in_track=1 ;; esac
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+case "$branch" in
+  track/*) in_track=1 ;;
+  foundation) [ -f docs/plan/ROADMAP.md ] && in_track=1 ;;
+esac
+if [ "$in_track" -eq 0 ]; then
+  today=$(date +%Y-%m-%d)
+  if [ ! -f ".focus/journal/$today.md" ]; then
+    echo "[focus] No journal entry for today — append a session entry to .focus/journal/$today.md before ending (see Session End)."
+  fi
 fi
 
 # --- Gated mode (opt-in) ---
