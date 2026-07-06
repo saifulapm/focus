@@ -25,7 +25,7 @@ Procedure:
    - What NOT to do (approaches already tried and failed, mined from log.md)
 
 4. **Make it durable.**
-   - **Track Mode** (worktree / `track/*` or `foundation` branch / published plan — see the focus skill's Track Mode rule 4): do NOT commit `.focus/` files. Push the current branch; on a published plan (`docs/plan/protocol.md` exists) also post the handoff block as a comment on the claimed issue (`gh issue comment`).
+   - **Track Mode** (worktree / `track/*` or `foundation` branch — see the focus skill's Track Mode rule 4): do NOT commit `.focus/` files. Push the current branch if it has a remote. Switching devices (or the user asks for a portable handoff)? Also write the handoff block to `docs/plan/handoffs/<branch-slug>.md` — the branch name with `/` replaced by `-`, e.g. `track-03-imports.md` — commit it on the work branch, and push. It travels with the branch; the resuming device deletes it in its first commit after consuming it (track completion at the latest — the merge gate rejects a survivor).
    - **Otherwise, commit:**
    ```
    git add -f .focus/plan.md .focus/log.md
@@ -33,7 +33,7 @@ Procedure:
    ```
    The `-f` is required (plan.md/log.md are gitignored by `.focus/.gitignore`; this commit is the one sanctioned exception). The commit is essential — without it the handoff vanishes if the session crashes.
 
-5. **Tell the user, verbatim** (adjust "committed" to "pushed / posted on issue #NN" in Track Mode):
+5. **Tell the user, verbatim** (adjust "committed" to "pushed" in Track Mode):
    ```
    Handoff written to .focus/plan.md (§Handoff) and committed.
    Recommend: /clear, then start a fresh session. The new agent will read the handoff and continue from the Exact next action.

@@ -150,8 +150,7 @@ in_track=0
 case "$PWD" in */.worktrees/*) in_track=1 ;; esac
 branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 case "$branch" in
-  track/*) in_track=1 ;;
-  foundation) [ -f docs/plan/ROADMAP.md ] && in_track=1 ;;
+  track/*|foundation) [ -f docs/plan/ROADMAP.md ] && in_track=1 ;;
 esac
 if [ "$in_track" -eq 0 ]; then
   today=$(date +%Y-%m-%d)
