@@ -12,13 +12,21 @@ if [ ! -f .focus/plan.md ]; then
   exit 0
 fi
 
+# Fence-aware handoff detection — a "## Handoff" inside a ``` code block is
+# documentation (e.g. a task Action embedding the template), not a handoff.
+has_handoff() {
+  awk '/^[[:space:]]*```/ { f = !f; next } !f && /^## Handoff/ { found = 1; exit } END { exit !found }' .focus/plan.md 2>/dev/null
+}
+
 # --- Unchecked phases ---
-total=$(grep -c '^- \[' .focus/plan.md 2>/dev/null); total=${total:-0}
-done=$(grep -c '^- \[x\]' .focus/plan.md 2>/dev/null); done=${done:-0}
+# Fence-aware: checkbox-shaped lines inside ``` code blocks (task Actions
+# embed code) must not count as tasks.
+total=$(awk '/^[[:space:]]*```/ { fence = !fence; next } !fence && /^- \[/ { n++ } END { print n + 0 }' .focus/plan.md 2>/dev/null); total=${total:-0}
+done=$(awk '/^[[:space:]]*```/ { fence = !fence; next } !fence && /^- \[x\]/ { n++ } END { print n + 0 }' .focus/plan.md 2>/dev/null); done=${done:-0}
 incomplete=$((total - done))
 
 if [ "$incomplete" -gt 0 ]; then
-  if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+  if has_handoff; then
     # A handoff is the sanctioned way to stop mid-plan (session-block
     # boundaries, context budget) — don't imply the stop is wrong.
     echo ""
@@ -28,7 +36,7 @@ if [ "$incomplete" -gt 0 ]; then
     echo ""
     echo "[focus] === INCOMPLETE PLAN ==="
     echo "[focus] $done/$total checkboxes complete. $incomplete remaining:"
-    grep '^- \[ \]' .focus/plan.md 2>/dev/null | head -10 | while read -r line; do
+    awk '/^[[:space:]]*```/ { fence = !fence; next } !fence && /^- \[ \]/ { print }' .focus/plan.md 2>/dev/null | head -10 | while read -r line; do
       echo "[focus]   $line"
     done
     if [ "$incomplete" -gt 10 ]; then
@@ -46,6 +54,8 @@ fi
 # task field. A documentation mention: "`[NEEDS CLARIFICATION: ...]`" wrapped
 # in backticks. Awk filters lines where the marker appears between backticks.
 blockers=$(awk '
+  /^[[:space:]]*```/ { fence = !fence; next }
+  fence { next }
   /\[NEEDS CLARIFICATION:/ {
     line = $0
     # Remove any `...` spans; if the marker survives, it was unquoted.
@@ -57,7 +67,7 @@ blockers=$(awk '
 if [ "$blockers" -gt 0 ]; then
   echo "[focus] === CLARIFICATION BLOCKERS ==="
   echo "[focus] $blockers unresolved [NEEDS CLARIFICATION] marker(s) in plan.md."
-  echo "[focus] Ask the human and resolve before executing further tasks."
+  echo "[focus] Ask the human and resolve before executing further tasks. (Track Mode: Ask-before-Task-N markers block only their own task.)"
   echo ""
 fi
 
@@ -67,6 +77,8 @@ if [ "$task_count" -gt 0 ]; then
   # Count tasks missing any required field. Rough heuristic: a task section
   # is everything from its "### Task" heading to the next "### " or EOF.
   missing=$(awk '
+    /^[[:space:]]*```/ { fence = !fence; next }
+    fence { next }
     /^### Task / {
       if (in_task) check()
       in_task = 1; has_files = 0; has_action = 0; has_verify = 0
@@ -133,10 +145,10 @@ if [ -f .focus/plan.md ]; then
 fi
 
 # --- Handoff hygiene ---
-if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+if has_handoff; then
   # If a handoff exists, check it has an "Exact next action" — the one field
   # a fresh agent cannot do without.
-  if ! awk '/^## Handoff/,0' .focus/plan.md | grep -q '^\*\*Exact next action:\*\*'; then
+  if ! awk '/^[[:space:]]*```/ { f = !f } !f && /^## Handoff/ { h = 1 } h' .focus/plan.md | grep -q '^\*\*Exact next action:\*\*'; then
     echo "[focus] === HANDOFF MISSING NEXT ACTION ==="
     echo "[focus] .focus/plan.md has a ## Handoff section but no 'Exact next action:' field."
     echo "[focus] Fix the handoff before ending the session, or a fresh agent will not know what to do."
@@ -166,7 +178,7 @@ fi
 # checkpoint (.stopblocks resets when plan.md changes — stall protection).
 if [ -f .focus/mode ] && grep -q '^gated' .focus/mode 2>/dev/null \
    && [ "$incomplete" -gt 0 ] \
-   && ! grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+   && ! has_handoff; then
   if echo "$input" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
     exit 0
   fi

@@ -93,11 +93,14 @@ fi
 
 if [ -f .focus/plan.md ]; then
   # Check for a Handoff section — if present, it is the ground truth.
-  if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+  # (Fence-aware: a ## Handoff inside a code block is documentation, not a handoff.)
+  if awk '/^[[:space:]]*```/ { f = !f; next } !f && /^## Handoff/ { found = 1; exit } END { exit !found }' .focus/plan.md 2>/dev/null; then
     echo '=== [focus] HANDOFF — resuming from previous session ==='
     echo '[focus] This section is ground truth. Read it before anything else.'
     echo
     awk '
+      /^[[:space:]]*```/ { fence = !fence; if (in_h) print; next }
+      fence { if (in_h) print; next }
       /^## Handoff/ { in_h = 1; print; next }
       in_h && /^## / { in_h = 0 }
       in_h { print }
@@ -111,6 +114,8 @@ if [ -f .focus/plan.md ]; then
         if (intask && has) { printf "%s", sec; found = 1 }
         intask = 0; sec = ""; has = 0
       }
+      /^[[:space:]]*```/ { fence = !fence; if (intask) sec = sec $0 "\n"; next }
+      fence              { if (intask) sec = sec $0 "\n"; next }
       /^## /       { flush(); if (found) exit }
       /^### Task / { flush(); if (found) exit; intask = 1 }
       intask       { sec = sec $0 "\n"; if ($0 ~ /^- \[ \]/) has = 1 }

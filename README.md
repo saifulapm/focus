@@ -67,7 +67,7 @@ Focus is engineered to leave your context window for *your* code, and its budget
 1. **Classify** — Focus picks the level from scope signals.
 2. **Research** (LARGE) — read-only sub-agents explore and return conclusions; raw file dumps never enter the main context.
 3. **Plan** — `.focus/plan.md` with atomic tasks. Every task has: **Files, Action, Verify (runnable command), Done when (observable criterion), Commit**. Missing fields block execution; `[NEEDS CLARIFICATION]` markers block until answered.
-4. **Self-review + independent plan check** — the 9-item checklist, then (LARGE) a fresh sub-agent adversarially grades the plan. Don't grade your own homework — plans included.
+4. **Self-review + independent plan check** — the 10-item checklist, then (LARGE) a fresh sub-agent adversarially grades the plan. Don't grade your own homework — plans included.
 5. **Execute** — per task: Action → run `Verify:` → confirm `Done when:` → commit. One commit per atomic task enables git-bisect recovery.
 6. **Evaluate** — a fresh sub-agent reads the plan and diff cold, verifies each requirement three levels deep (exists / substantive / wired), runs the verification commands itself, and returns a verdict. On CHANGES REQUESTED, the re-run uses **re-verification mode**: full re-check of failed REQs, regression check on passed ones.
 7. **Merge or PR** — only after evaluator PASS.

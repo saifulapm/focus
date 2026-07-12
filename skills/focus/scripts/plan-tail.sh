@@ -36,17 +36,22 @@ if [ $((count % 5)) -ne 1 ]; then
   exit 0
 fi
 
-if grep -q '^## Handoff' .focus/plan.md 2>/dev/null; then
+if awk '/^[[:space:]]*```/ { f = !f; next } !f && /^## Handoff/ { found = 1; exit } END { exit !found }' .focus/plan.md 2>/dev/null; then
   echo '[focus] A ## Handoff is pending in .focus/plan.md. If you have not consumed it: read it, archive it to log.md, delete it from plan.md, then continue from its "Exact next action".'
   exit 0
 fi
 
 # Goal + Level + first task section that still has an unchecked box.
+# Fence-aware: task Actions embed code blocks whose content can contain
+# markdown headings and checkbox-shaped lines — inside ``` fences, lines only
+# accumulate; they never trigger section boundaries or checkbox detection.
 awk '
   function flush() {
     if (intask && has) { printf "%s", sec; found = 1 }
     intask = 0; sec = ""; has = 0
   }
+  /^[[:space:]]*```/ { fence = !fence; if (intask) sec = sec $0 "\n"; next }
+  fence              { if (intask) sec = sec $0 "\n"; next }
   /^## /       { flush(); if (found) exit }
   /^### Task / { flush(); if (found) exit; intask = 1 }
   intask       { sec = sec $0 "\n"; if ($0 ~ /^- \[ \]/) has = 1 }
