@@ -4,7 +4,10 @@
 # Repeated identical context degrades attention and wastes tokens, so this
 # does NOT fire on every tool call:
 #   - The hook matcher (SKILL.md frontmatter) is Write|Edit|Bash only.
-#   - A counter in .focus/.toolcount throttles injection to every 5th call.
+#   - A per-session counter in .focus/.toolcount.<session> throttles
+#     injection to every 5th call. Keying on the hook's session_id keeps two
+#     sessions in one checkout from corrupting each other's counter; stale
+#     per-session files (idle >1 day) are swept opportunistically.
 #   - The counter resets whenever plan.md changes — a plan edit (check-off,
 #     handoff, new plan) is a checkpoint; the first call after it re-injects.
 #   - At 40+ uncheckpointed calls it emits a handoff-budget warning.
@@ -16,7 +19,16 @@
 
 [ -f .focus/plan.md ] || exit 0
 
-count_file=".focus/.toolcount"
+# Sweep stale per-session counters (idle >1 day) so they don't accumulate.
+find .focus -maxdepth 1 -type f -name '.toolcount.*' -mtime +1 -delete 2>/dev/null
+
+# Per-session counter keyed on session_id (from the hook's stdin JSON). Falls
+# back to a shared .toolcount when no session_id is available.
+input=""
+[ -t 0 ] || input=$(cat 2>/dev/null)
+session_id=$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+sid8=$(printf '%s' "$session_id" | cut -c1-8)
+count_file=".focus/.toolcount${sid8:+.$sid8}"
 
 if [ ! -f "$count_file" ] || [ .focus/plan.md -nt "$count_file" ]; then
   count=0

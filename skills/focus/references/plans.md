@@ -101,7 +101,7 @@ If you do not have enough information to write any required field of a task, do 
 [NEEDS CLARIFICATION: <exact question>]
 ```
 
-inline where the unknown is. While any `[NEEDS CLARIFICATION]` marker exists in plan.md, execution is blocked. Ask the human all markers at once, then replace them before starting work. **Track Mode exception:** markers created from a brief's `Ask before Task N` entries block only their own task (SKILL.md Track Mode rule 1) — never ask them early; they are scheduled stops the plan deliberately deferred.
+inline where the unknown is. While any `[NEEDS CLARIFICATION]` marker exists in plan.md, execution is blocked. Ask the human all markers at once, then replace them before starting work. **Track Mode exception:** markers created from a brief's `Ask before Task N` entries block only their own task (`references/track-mode.md` rule 1) — never ask them early; they are scheduled stops the plan deliberately deferred.
 
 ## Plan Rules — NO PLACEHOLDERS
 These are plan failures. Never write them:
@@ -127,3 +127,46 @@ Before presenting a MEDIUM or LARGE plan to the human, check each item. Each fai
 8. **Consistency:** Types, function names, and signatures match across tasks.
 9. **Dependency order:** Tasks are ordered so dependencies are met. No task references work from a later task.
 10. **Header complete:** `Branch:` and `Base:` are filled with real values — `Base:` is an actual sha (`git rev-parse` output), not the template's placeholder text.
+
+---
+
+## LARGE Research — delegate, don't accumulate
+
+SKILL.md's LARGE ceremony step 3 says "research the codebase — delegate, don't accumulate"; this is the full procedure. The goal is that your main context holds conclusions, never raw file dumps.
+
+- **Prefer read-only sub-agents** (Explore type if available) for broad questions — one per research question ("how does auth work here", "where do API routes live"). Instruct each to return a compact findings report: file paths, patterns, constraints — never raw file dumps.
+- **Single writer:** sub-agents return findings; only you append them to `.focus/log.md` under `### Research [date]`.
+- Read directly only the files you will edit. Identify patterns, conventions, dependencies, and constraints (what can't change, what breaks if you touch it).
+- **Research Flush Rule:** flush findings to log.md at the end of each research question, or after ~5 reads/searches — whichever comes first. For broad exploration, prefer dispatching a read-only sub-agent that writes findings to log.md, keeping raw file contents out of your context.
+
+---
+
+## Completion Protocol
+
+SKILL.md's Completion Protocol summary has the ordered gate; this is the full checklist. Before claiming any task is done:
+
+1. **Self-review code** against plan requirements — does the implementation match what was specified?
+2. **Check code quality** — any obvious issues, missing error handling in critical paths, unused imports?
+3. Run tests. All must pass (with evidence).
+4. Run build/lint if applicable. Must succeed.
+5. All plan tasks checked off.
+6. **MEDIUM/LARGE only: Invoke the evaluator** (see the Evaluator Gate). Only a PASS verdict permits completion. CHANGES REQUESTED or FAIL sends you back to step 1 after fixes.
+7. Update `.focus/log.md` with final status (include the evaluator verdict summary).
+8. Append a session entry to `.focus/journal/<YYYY-MM-DD>.md`.
+9. Update `.focus/memory.md` only if state changed (new principle / decision / open item).
+10. **Archive, then delete.** Append a compact plan record to today's journal entry — Goal, REQs with final status, evaluator verdict, task → commit sha list — then delete `.focus/plan.md` and `.focus/log.md`. Plans are working files, but their evidence (what was required, what the evaluator verified, which commit delivered it) must survive in the journal.
+
+### Gated mode (opt-in)
+
+By default Focus never blocks a stop — the Stop hook is advisory. Projects that want enforcement create `.focus/mode` containing `gated` (committed): the Stop hook then blocks (exit 2) while plan.md has unchecked tasks, capped at 5 blocks per plan checkpoint. A written `## Handoff` always exempts — handing off is the sanctioned way to stop mid-plan.
+
+### Retrospective (LARGE tasks only)
+
+After completing a LARGE task, append to today's journal file (`.focus/journal/<YYYY-MM-DD>.md`):
+```
+## Retro: <task name> (<date>)
+- What went well: <1-2 points>
+- What went poorly: <1-2 points>
+- Change for next time: <1 actionable improvement>
+- Navigation friction: <anything hard to find or understand that a CLAUDE.md line or codebase map would fix? Propose the exact line, or "none">
+```

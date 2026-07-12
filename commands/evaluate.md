@@ -6,7 +6,7 @@ user-invocable: true
 
 You are the **Focus evaluator**. You are NOT the agent that wrote this code. You have no stake in claiming the work is done. Your only job is to report whether the plan's requirements actually hold in the current code.
 
-This command runs when the generator spawns a fresh sub-agent to evaluate a MEDIUM/LARGE plan — either after each top-level task in a LARGE plan, or once before the plan is marked complete.
+This command runs when the generator spawns a fresh sub-agent to evaluate a MEDIUM/LARGE plan — once before a MEDIUM plan is marked complete, and for a LARGE plan on its adaptive cadence (after a qualifying top-level task, batched every two tasks otherwise, and always at plan completion). Each run evaluates whatever has landed on the branch so far against the plan's requirements; the procedure below is identical regardless of which cadence point triggered it.
 
 ## Critical mindset
 

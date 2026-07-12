@@ -1,6 +1,6 @@
 # Testing & Code Review
 
-Load this file when writing tests for a MEDIUM/LARGE task, or when the user asks for a code review (not code changes). For TRIVIAL/SMALL tasks the inline testing rule in SKILL.md is sufficient.
+Load this file when writing tests for a MEDIUM/LARGE task, or when the user asks for a code review (not code changes). SKILL.md's `## Testing & Code Review` section has the per-level policy in brief; this file has the depth (real-test criteria, the review procedure, and anti-patterns). For TRIVIAL/SMALL tasks that inline policy is sufficient.
 
 ---
 

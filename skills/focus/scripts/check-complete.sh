@@ -4,13 +4,21 @@
 # Advisory by default; opt-in gated mode (.focus/mode containing "gated")
 # blocks stopping while unchecked tasks remain — capped, handoff-exempt.
 
-# Hook input arrives as JSON on stdin (contains stop_hook_active).
+# Hook input arrives as JSON on stdin (contains stop_hook_active, session_id).
 input=""
 [ -t 0 ] || input=$(cat 2>/dev/null)
 
 if [ ! -f .focus/plan.md ]; then
   exit 0
 fi
+
+# Per-session gated-mode block counter, keyed on session_id so two sessions in
+# one checkout don't corrupt each other's .stopblocks. Falls back to a shared
+# file when no session_id is available. Stale per-session files (idle >1 day)
+# are swept opportunistically.
+find .focus -maxdepth 1 -type f -name '.stopblocks.*' -mtime +1 -delete 2>/dev/null
+session_id=$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+sid8=$(printf '%s' "$session_id" | cut -c1-8)
 
 # Fence-aware handoff detection — a "## Handoff" inside a ``` code block is
 # documentation (e.g. a task Action embedding the template), not a handoff.
@@ -182,7 +190,7 @@ if [ -f .focus/mode ] && grep -q '^gated' .focus/mode 2>/dev/null \
   if echo "$input" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
     exit 0
   fi
-  bf=".focus/.stopblocks"
+  bf=".focus/.stopblocks${sid8:+.$sid8}"
   if [ ! -f "$bf" ] || [ .focus/plan.md -nt "$bf" ]; then
     blocks=0
   else

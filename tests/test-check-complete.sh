@@ -71,4 +71,20 @@ printf '**Goal:** G\n\n- [ ] x\n' > .focus/plan.md
 cc >/dev/null; rc=$?
 t "advisory default exit 0" "$rc" "0"
 
+# --- per-session gated block counter keyed on session_id ---
+sandbox
+mkdir .focus
+printf '**Goal:** G\n\n### Task 1: A\n\n- [ ] Execute\n' > .focus/plan.md
+echo gated > .focus/mode
+echo '{"session_id":"11112222aaaa"}' | bash "$SCRIPTS/check-complete.sh" >/dev/null 2>stderr.txt; rc=$?
+t "gated blocks per session (exit 2)" "$rc" "2"
+t "per-session stopblocks file created" "$(cat .focus/.stopblocks.11112222)" "1"
+t "no shared stopblocks when session_id present" "$([ -f .focus/.stopblocks ] && echo present || echo absent)" "absent"
+
+# --- stale per-session stopblocks (idle >1 day) swept ---
+printf '5' > .focus/.stopblocks.staleses
+touch -t 202601010000 .focus/.stopblocks.staleses
+echo '{"session_id":"33334444bbbb"}' | bash "$SCRIPTS/check-complete.sh" >/dev/null 2>stderr.txt
+t "stale session stopblocks deleted" "$([ -f .focus/.stopblocks.staleses ] && echo present || echo absent)" "absent"
+
 finish

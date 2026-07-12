@@ -66,4 +66,21 @@ printf '39' > .focus/.toolcount
 out=$(bash "$SCRIPTS/plan-tail.sh")
 t_contains "budget warning at call 40" "$out" "consider /focus:handoff"
 
+# --- per-session counter: session_id keys the file; two sessions isolated ---
+sandbox
+mkdir .focus
+printf '%s' "$PLAN" > .focus/plan.md
+echo '{"session_id":"aaaaaaaabbbb"}' | bash "$SCRIPTS/plan-tail.sh" >/dev/null
+t "session counter uses first 8 chars of id" "$([ -f .focus/.toolcount.aaaaaaaa ] && echo 1)" "1"
+t "no shared counter when session_id present" "$([ -f .focus/.toolcount ] && echo present || echo absent)" "absent"
+echo '{"session_id":"ccccccccdddd"}' | bash "$SCRIPTS/plan-tail.sh" >/dev/null
+t "second session gets its own counter" "$([ -f .focus/.toolcount.cccccccc ] && echo 1)" "1"
+t "first session counter unaffected (isolated)" "$(cat .focus/.toolcount.aaaaaaaa)" "1"
+
+# --- stale per-session counter (idle >1 day) swept on next call ---
+printf '5' > .focus/.toolcount.staleses
+touch -t 202601010000 .focus/.toolcount.staleses
+echo '{"session_id":"eeeeeeeeffff"}' | bash "$SCRIPTS/plan-tail.sh" >/dev/null
+t "stale session counter deleted" "$([ -f .focus/.toolcount.staleses ] && echo present || echo absent)" "absent"
+
 finish

@@ -45,7 +45,7 @@ And it scales ceremony to task size, so trivial work doesn't get enterprise trea
 | **TRIVIAL** | Fix typo, rename variable | Just do it. One log line. |
 | **SMALL** | Add a function | 3-line plan. Do it. Verify. |
 | **MEDIUM** | New API endpoint | Atomic plan with Verify/Done-when per task. Evaluator gate before done. |
-| **LARGE** | Auth redesign | Research via read-only sub-agents → design options → plan → independent plan check → human approval → execute → per-task evaluator → retro. |
+| **LARGE** | Auth redesign | Research via read-only sub-agents → design options → plan → independent plan check → human approval → execute → adaptive-cadence evaluator → retro. |
 
 Tasks escalate mid-work if they grow — and de-escalate if they shrink.
 
@@ -53,14 +53,15 @@ Tasks escalate mid-work if they grow — and de-escalate if they shrink.
 
 Focus is engineered to leave your context window for *your* code, and its budgets are CI-enforced, not aspirational:
 
-| Hook surface | Cost |
+| Surface | Cost |
 |---|---|
-| First prompt of a session | One full state block (≤3.5 KB: principles, unchecked open items, recent journal, plan position) |
-| **Every later prompt** | **≤200 bytes** (timestamp + plan pointer) |
-| Plan re-injection | Goal + current task, every 5th Write/Edit/Bash call only |
-| Stop check | Capped listings with overflow counts |
+| **Always-loaded skill body** (`SKILL.md`) | **≤16 KB (~4k tokens)** — paid before every coding task; depth is deferred to `references/*.md` loaded on demand |
+| First prompt of a session (hook) | One full state block (≤3.5 KB: principles, unchecked open items, recent journal, plan position) |
+| **Every later prompt** (hook) | **≤200 bytes** (timestamp + plan pointer) |
+| Plan re-injection (hook) | Goal + current task, every 5th Write/Edit/Bash call only |
+| Stop check (hook) | Capped listings with overflow counts |
 
-`/clear` issues a new session id, which brings the full block back — exactly when a fresh agent needs it. The caps live in `tests/test-context-budget.sh`; if a change makes any hook exceed its budget, CI fails.
+`/clear` issues a new session id, which brings the full block back — exactly when a fresh agent needs it. Every cap above — the always-loaded body included — lives in `tests/test-context-budget.sh`; a change that exceeds any budget fails CI.
 
 ## How a MEDIUM or LARGE task runs
 
@@ -82,8 +83,8 @@ Focus is engineered to leave your context window for *your* code, and its budget
     2026-04-20.md
   plan.md              # gitignored — active task's plan (archived to journal, then deleted)
   log.md               # gitignored — active task's tool-call trail
-  .toolcount           # gitignored — hook counter for throttled injection + handoff budget
-  .stopblocks          # gitignored — gated-mode block counter
+  .toolcount.<session> # gitignored — per-session hook counter for throttled injection + handoff budget
+  .stopblocks.<session> # gitignored — per-session gated-mode block counter
   .lastsession         # gitignored — session id for once-per-session context injection
   mode                 # optional, committed — contains "gated" to enable the blocking Stop hook
   principles.md        # optional, committed — for projects that want principles isolated
@@ -125,7 +126,7 @@ Focus draws on Anthropic's harness-design research plus a cross-analysis of BMAD
 - **Independent evaluator** (Anthropic, superpowers) — a fresh agent grades the diff, not the generator.
 - **Structured context reset** (Anthropic) — handoff artifacts beat in-place compaction.
 
-What Focus adds: **adaptive ceremony** (TRIVIAL → LARGE with escalation/de-escalation), **CI-enforced context budgets**, and **one-command install** on Claude Code. The skill keeps its always-loaded surface under 500 lines, with depth pushed to on-demand reference files — and the harness itself is tested (`bash tests/run.sh`, 47 assertions covering every hook script, run on Linux and macOS in CI).
+What Focus adds: **adaptive ceremony** (TRIVIAL → LARGE with escalation/de-escalation), **CI-enforced context budgets**, and **one-command install** on Claude Code. The skill keeps its always-loaded surface under 250 lines / 16 KB (CI-enforced), with depth pushed to on-demand reference files — and the harness itself is tested (`bash tests/run.sh`, which prints its live assertion count, covering every hook script on Linux and macOS in CI).
 
 ## License
 

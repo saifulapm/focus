@@ -59,4 +59,14 @@ t "plan-tail injection <= 35 lines (got $lines)" "$((lines <= 35))" "1"
 cclines=$(echo '{}' | bash "$SCRIPTS/check-complete.sh" 2>/dev/null | wc -l | tr -d ' ')
 t "check-complete output <= 40 lines (got $cclines)" "$((cclines <= 40))" "1"
 
+# --- always-loaded SKILL.md body: CI-enforced (paid before every task) ---
+# The hooks are throttled/capped; the body is not, so cap it here. Hot path
+# spec: <=250 lines AND <=16000 bytes (frontmatter + hook declarations + the
+# core process; depth lives in references/*.md).
+skill="$REPO_ROOT/skills/focus/SKILL.md"
+skill_bytes=$(wc -c < "$skill" | tr -d ' ')
+skill_lines=$(wc -l < "$skill" | tr -d ' ')
+t "SKILL.md body <= 16000 bytes (got $skill_bytes)" "$((skill_bytes <= 16000))" "1"
+t "SKILL.md body <= 250 lines (got $skill_lines)" "$((skill_lines <= 250))" "1"
+
 finish
