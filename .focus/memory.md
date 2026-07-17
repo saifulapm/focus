@@ -36,7 +36,7 @@
 | 2026-06-12 | Gated stop is opt-in (`.focus/mode` = `gated`), advisory stays default | "Focus never blocks" remains the principle; gating is a conscious per-project choice with cap + handoff exemption |
 | 2026-06-12 | Evaluator re-verification mode: prior evaluator report scopes depth | Evaluator output isn't generator claims; full re-check of FAILED REQs, regression on VERIFIED |
 | 2026-06-12 | Pure-shell test suite (`tests/run.sh`) + CI on ubuntu/macos | Scripts had caught-by-hand bugs twice before; bats would be a dependency |
-| 2026-06-12 | Plugin packaging: same-repo plugin.json + marketplace.json (v2.1.0); hooks resolve scripts via CLAUDE_SKILL_DIR first | Plugin marketplace is Claude Code's distribution mechanism; old `$CLAUDE_PLUGIN_ROOT/scripts/` path was wrong for this layout |
+| 2026-06-12 | Plugin packaging: same-repo plugin.json + marketplace.json (v2.1.0); hooks resolve scripts via a probe chain — CLAUDE_PLUGIN_ROOT → CLAUDE_PROJECT_DIR → cwd-relative → $HOME (corrected 2026-07-17: CLAUDE_SKILL_DIR is never set for skill-frontmatter hooks; probing it first was dead code) | Plugin marketplace is Claude Code's distribution mechanism; old `$CLAUDE_PLUGIN_ROOT/scripts/` path was wrong for this layout |
 
 ## Principles
 - **MUST** keep SKILL.md under ~500 lines; push depth into `skills/focus/references/*.md` as it grows.

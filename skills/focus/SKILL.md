@@ -6,16 +6,16 @@ hooks:
   UserPromptSubmit:
     - hooks:
         - type: command
-          command: "s=session-context.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && exec bash \"$p\"; done; exit 0"
+          command: "s=session-context.sh; d=skills/focus/scripts; for p in \"${CLAUDE_PLUGIN_ROOT:-}/$d\" \"${CLAUDE_PROJECT_DIR:-}/.claude/$d\" \".claude/$d\" \"$HOME/.claude/$d\"; do [ -x \"$p/$s\" ] && exec bash \"$p/$s\"; done; exit 0"
   PreToolUse:
     - matcher: "Write|Edit|Bash"
       hooks:
         - type: command
-          command: "s=plan-tail.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && exec bash \"$p\"; done; exit 0"
+          command: "s=plan-tail.sh; d=skills/focus/scripts; for p in \"${CLAUDE_PLUGIN_ROOT:-}/$d\" \"${CLAUDE_PROJECT_DIR:-}/.claude/$d\" \".claude/$d\" \"$HOME/.claude/$d\"; do [ -x \"$p/$s\" ] && exec bash \"$p/$s\"; done; exit 0"
   Stop:
     - hooks:
         - type: command
-          command: "s=check-complete.sh; for p in \"${CLAUDE_SKILL_DIR:-}/scripts/$s\" \"${CLAUDE_PLUGIN_ROOT:-}/skills/focus/scripts/$s\" \"$HOME/.claude/skills/focus/scripts/$s\"; do [ -n \"$p\" ] && [ -x \"$p\" ] && exec bash \"$p\"; done; exit 0"
+          command: "s=check-complete.sh; d=skills/focus/scripts; for p in \"${CLAUDE_PLUGIN_ROOT:-}/$d\" \"${CLAUDE_PROJECT_DIR:-}/.claude/$d\" \".claude/$d\" \"$HOME/.claude/$d\"; do [ -x \"$p/$s\" ] && exec bash \"$p/$s\"; done; exit 0"
 ---
 
 # Focus
@@ -29,7 +29,7 @@ Adaptive process, persistent context, cross-session memory, structured planning,
 3. If `.focus/plan.md` exists, read it. A `## Handoff` section is **ground truth** (resume rules in `references/handoff-protocol.md`) — trust its "Exact next action". Otherwise read the whole plan, run **Reconcile on resume** (below), and continue from the first unchecked task.
 4. If `.focus/log.md` and plan.md both exist, read log.md's last ~20 lines — recent errors, "what NOT to do", in-progress state.
 5. If `.focus/` doesn't exist, proceed normally; create it when a task warrants it (MEDIUM/LARGE).
-6. On first creating `.focus/`, also write `.focus/.gitignore` with `plan.md`, `log.md`, `report.md`, `gate-report.md`, `.toolcount*`, `.lastsession`, `.stopblocks*`. `memory.md` and `journal/` are committed.
+6. Ensure `.focus/.gitignore` lists `plan.md`, `log.md`, `report.md`, `gate-report.md`, `gate-findings.md`, `.toolcount*`, `.lastsession*`, `.stopblocks*` — write it when creating `.focus/`, rewrite it when its list is stale. `memory.md` and `journal/` are committed.
 7. **Legacy migration:** if `memory.md` has a `## Last Session` section (old format), migrate it to `journal/` once, silently (procedure in `references/memory.md`).
 
 ### Reconcile on resume (non-handoff)

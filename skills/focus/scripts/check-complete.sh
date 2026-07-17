@@ -26,11 +26,19 @@ has_handoff() {
   awk '/^[[:space:]]*```/ { f = !f; next } !f && /^## Handoff/ { found = 1; exit } END { exit !found }' .focus/plan.md 2>/dev/null
 }
 
+# Defect-stop / completion report detection — Track Mode's other sanctioned
+# stop artifact (.focus/report.md, first line "STATUS: ..."). A defect stop
+# (STATUS: BLOCKED) leaves unchecked tasks and NO handoff by design; the
+# orchestrator dispatches on the report, so the stop must not be blocked.
+has_report_status() {
+  [ -f .focus/report.md ] && head -1 .focus/report.md 2>/dev/null | grep -q '^STATUS:'
+}
+
 # --- Unchecked phases ---
 # Fence-aware: checkbox-shaped lines inside ``` code blocks (task Actions
 # embed code) must not count as tasks.
 total=$(awk '/^[[:space:]]*```/ { fence = !fence; next } !fence && /^- \[/ { n++ } END { print n + 0 }' .focus/plan.md 2>/dev/null); total=${total:-0}
-done=$(awk '/^[[:space:]]*```/ { fence = !fence; next } !fence && /^- \[x\]/ { n++ } END { print n + 0 }' .focus/plan.md 2>/dev/null); done=${done:-0}
+done=$(awk '/^[[:space:]]*```/ { fence = !fence; next } !fence && /^- \[[xX]\]/ { n++ } END { print n + 0 }' .focus/plan.md 2>/dev/null); done=${done:-0}
 incomplete=$((total - done))
 
 if [ "$incomplete" -gt 0 ]; then
@@ -39,6 +47,10 @@ if [ "$incomplete" -gt 0 ]; then
     # boundaries, context budget) — don't imply the stop is wrong.
     echo ""
     echo "[focus] $done/$total tasks complete — handoff in place; stopping here is sanctioned. Next session resumes from plan.md §Handoff."
+    echo ""
+  elif has_report_status; then
+    echo ""
+    echo "[focus] $done/$total tasks complete — .focus/report.md carries a STATUS line; a defect-stop/report stop is sanctioned. The orchestrator dispatches on the report."
     echo ""
   else
     echo ""
@@ -182,11 +194,15 @@ fi
 # --- Gated mode (opt-in) ---
 # Blocks stopping while unchecked tasks remain. Safeguards: never when the
 # harness signals stop_hook_active (prevents loops), never when a ## Handoff
-# exists (the sanctioned way to stop mid-plan), capped at 5 blocks per plan
-# checkpoint (.stopblocks resets when plan.md changes — stall protection).
+# exists (the sanctioned way to stop mid-plan), never when .focus/report.md
+# carries a STATUS line (a defect stop / completion report — the other
+# sanctioned stop; blocking it would push the agent to touch tasks it must
+# not, or delete a possibly-committed .focus/mode), capped at 5 blocks per
+# plan checkpoint (.stopblocks resets when plan.md changes — stall protection).
 if [ -f .focus/mode ] && grep -q '^gated' .focus/mode 2>/dev/null \
    && [ "$incomplete" -gt 0 ] \
-   && ! has_handoff; then
+   && ! has_handoff \
+   && ! has_report_status; then
   if echo "$input" | grep -q '"stop_hook_active"[[:space:]]*:[[:space:]]*true'; then
     exit 0
   fi
@@ -199,7 +215,7 @@ if [ -f .focus/mode ] && grep -q '^gated' .focus/mode 2>/dev/null \
   fi
   if [ "$blocks" -lt 5 ]; then
     echo $((blocks + 1)) > "$bf"
-    echo "[focus] Gated mode: $incomplete unchecked task(s) in .focus/plan.md. Finish them, emit /focus:handoff, or remove .focus/mode to disable gating. (block $((blocks + 1))/5)" >&2
+    echo "[focus] Gated mode: $incomplete unchecked task(s) in .focus/plan.md. Finish them, emit /focus:handoff, or — for a defect stop — write .focus/report.md with a 'STATUS:' first line. Never edit or remove .focus/mode yourself (it may be committed policy). (block $((blocks + 1))/5)" >&2
     exit 2
   fi
 fi

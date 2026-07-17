@@ -65,6 +65,32 @@ printf '\n## Handoff\n\n**Exact next action:** x\n' >> .focus/plan.md
 cc >/dev/null; rc=$?
 t "handoff exempts gating" "$rc" "0"
 
+# --- defect-stop report exempts gating (STATUS: first line) ---
+sandbox
+mkdir .focus
+printf '**Goal:** G\n\n### Task 1: A\n\n- [ ] Execute\n' > .focus/plan.md
+echo gated > .focus/mode
+printf 'STATUS: BLOCKED — contract change: need seam\n\ndetails\n' > .focus/report.md
+out=$(cc); rc=$?
+t "defect-stop report exempts gating" "$rc" "0"
+t_contains "report stop sanctioned message" "$out" "defect-stop/report stop is sanctioned"
+t_missing "no INCOMPLETE PLAN over a report" "$out" "INCOMPLETE PLAN"
+
+# --- report without STATUS line does NOT exempt ---
+printf 'some notes, not a status report\n' > .focus/report.md
+cc >/dev/null; rc=$?
+t "statusless report does not exempt" "$rc" "2"
+
+# --- capital-X checkboxes count as done (gated must not block a finished plan) ---
+sandbox
+mkdir .focus
+printf '**Goal:** G\n\n- [X] one\n- [x] two\n' > .focus/plan.md
+echo gated > .focus/mode
+cc >/dev/null; rc=$?
+t "capital-X counts as done under gating" "$rc" "0"
+out=$(cc)
+t_missing "no incomplete warning for [X]" "$out" "INCOMPLETE PLAN"
+
 sandbox
 mkdir .focus
 printf '**Goal:** G\n\n- [ ] x\n' > .focus/plan.md

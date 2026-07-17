@@ -24,8 +24,15 @@ session_id=$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:spac
 now=$(date '+%Y-%m-%d %H:%M')
 
 # --- Repeat prompt in the same session: 1-2 line refresh only ---
-if [ -n "$session_id" ] && [ -f .focus/.lastsession ] \
-   && [ "$session_id" = "$(cat .focus/.lastsession 2>/dev/null)" ]; then
+# Keyed per session (like .toolcount/.stopblocks): two concurrent sessions in
+# one checkout (orchestrator + spawned foundation session) must not ping-pong
+# a shared file, re-injecting the full block on every prompt. Stale keys and
+# the legacy shared file are swept opportunistically.
+find .focus -maxdepth 1 -type f -name '.lastsession*' -mtime +1 -delete 2>/dev/null
+sid8=$(printf '%s' "$session_id" | cut -c1-8)
+lastfile=".focus/.lastsession${sid8:+.$sid8}"
+if [ -n "$session_id" ] && [ -f "$lastfile" ] \
+   && [ "$session_id" = "$(cat "$lastfile" 2>/dev/null)" ]; then
   echo "[focus] Now: $now."
   if [ -f .focus/plan.md ]; then
     goal=$(grep -m1 '^\*\*Goal:\*\*' .focus/plan.md)
@@ -33,7 +40,7 @@ if [ -n "$session_id" ] && [ -f .focus/.lastsession ] \
   fi
   exit 0
 fi
-[ -n "$session_id" ] && printf '%s' "$session_id" > .focus/.lastsession
+[ -n "$session_id" ] && printf '%s' "$session_id" > "$lastfile"
 
 echo "[focus] Now: $now. Use this timestamp for log/journal entries. Invoke the focus skill before coding work."
 
