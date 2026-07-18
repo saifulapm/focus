@@ -12,6 +12,10 @@ hooks:
       hooks:
         - type: command
           command: "s=plan-tail.sh; d=skills/focus/scripts; for p in \"${CLAUDE_PLUGIN_ROOT:-}/$d\" \"${CLAUDE_PROJECT_DIR:-}/.claude/$d\" \".claude/$d\" \"$HOME/.claude/$d\"; do [ -x \"$p/$s\" ] && exec bash \"$p/$s\"; done; exit 0"
+    - matcher: "AskUserQuestion"
+      hooks:
+        - type: command
+          command: "s=question-guard.sh; d=skills/focus/scripts; for p in \"${CLAUDE_PLUGIN_ROOT:-}/$d\" \"${CLAUDE_PROJECT_DIR:-}/.claude/$d\" \".claude/$d\" \"$HOME/.claude/$d\"; do [ -x \"$p/$s\" ] && exec bash \"$p/$s\"; done; exit 0"
   Stop:
     - hooks:
         - type: command

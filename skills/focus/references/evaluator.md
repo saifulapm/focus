@@ -13,7 +13,7 @@ Then tell the sub-agent: *"Read `<verified absolute path>` and follow its proced
 ## What to do with the verdict
 
 - **PASS** — proceed to merge (Track Mode: to the ready-to-merge report — Track Mode rule 3 still forbids merging). Record any evaluator suggestions in log.md for next-session follow-up.
-- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent every time), including the **prior evaluator report verbatim** in its prompt so it can run re-verification mode (full re-check of FAILED REQs, regression check on VERIFIED ones). Never include your own summary of the fixes. Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
+- **CHANGES REQUESTED** — address every blocker issue. Re-invoke the evaluator after fixes (fresh agent every time), including the **prior evaluator report verbatim** in its prompt so it can run prior-report mode (full re-check of FAILED REQs, regression check on VERIFIED ones). Never include your own summary of the fixes. Do not argue with the evaluator; treat its report as the source of truth until you can show the diff refutes it.
 - **FAIL** — the plan itself is wrong, not just the code. Update plan.md, note the escalation in log.md, consider whether the task has become LARGE, then continue.
 - **UNCERTAIN** — the evaluator asked a specific question. Answer it in plan.md or log.md, then re-invoke.
 

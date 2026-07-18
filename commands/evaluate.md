@@ -55,14 +55,19 @@ After the per-REQ procedure — on every evaluation, first run and re-verificati
 - **Unused code:** Obvious dead code, imports that aren't used, exported functions never called.
 - **Scope:** Does the diff implement only what the plan specified, or has scope crept?
 
-## Re-verification mode
+## Prior-report mode (re-verification and block cadence)
 
-If your spawn prompt includes a **prior evaluator report** (you are re-verifying after CHANGES REQUESTED), scope the per-REQ work:
+Two inputs trigger scoping; both are prior **evaluator** output, never generator claims:
 
-- REQs previously `FAILED` or `UNCERTAIN`: run the **full procedure** above.
-- REQs previously `VERIFIED`: run a **regression check only** — the implementing artifact is still present and the task's `Verify:` command exits 0. Report them as `VERIFIED (regression)`. If a regression check fails, escalate that REQ to the full procedure.
+- Your spawn prompt includes a **prior evaluator report** (re-verifying after CHANGES REQUESTED), or
+- plan.md carries a `## Evaluations` section (Track Mode's per-block cadence records one line per run: `- Block <N> (through <sha>): <verdict> — verified: <REQ list>`).
 
-The prior report is evaluator output, not generator claims — using its VERIFIED entries to scope depth does not violate the cold-read rule, because every REQ still gets a fresh command run. If the spawn prompt instead summarizes the generator's fixes, ignore that summary and evaluate from the diff. The plan-level checks above are never scoped down — they run in full on every pass.
+Scope the per-REQ work:
+
+- REQs previously `FAILED` or `UNCERTAIN`, REQs never yet evaluated, and — for `## Evaluations` records — previously verified REQs whose implementing files changed since the record's `through` sha (`git diff <sha>..HEAD --name-only` against the REQ's files): run the **full procedure** above.
+- REQs previously `VERIFIED` and untouched since: run a **regression check only** — the implementing artifact is still present and the task's `Verify:` command exits 0. Report them as `VERIFIED (regression)`. If a regression check fails, escalate that REQ to the full procedure.
+
+Using prior VERIFIED entries to scope depth does not violate the cold-read rule, because every REQ still gets a fresh command run. If the spawn prompt instead summarizes the generator's fixes, ignore that summary and evaluate from the diff. The plan-level checks above are never scoped down — they run in full on every pass.
 
 ## Output format
 

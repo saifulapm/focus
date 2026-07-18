@@ -61,12 +61,13 @@ t "check-complete output <= 40 lines (got $cclines)" "$((cclines <= 40))" "1"
 
 # --- always-loaded SKILL.md body: CI-enforced (paid before every task) ---
 # The hooks are throttled/capped; the body is not, so cap it here. Hot path
-# spec: <=250 lines AND <=16000 bytes (frontmatter + hook declarations + the
-# core process; depth lives in references/*.md).
+# spec: <=250 lines AND <=16384 bytes (frontmatter + hook declarations + the
+# core process; depth lives in references/*.md). Raised 16000->16384 for the
+# question-guard hook declaration — enforcement wiring, not body bloat.
 skill="$REPO_ROOT/skills/focus/SKILL.md"
 skill_bytes=$(wc -c < "$skill" | tr -d ' ')
 skill_lines=$(wc -l < "$skill" | tr -d ' ')
-t "SKILL.md body <= 16000 bytes (got $skill_bytes)" "$((skill_bytes <= 16000))" "1"
+t "SKILL.md body <= 16384 bytes (got $skill_bytes)" "$((skill_bytes <= 16384))" "1"
 t "SKILL.md body <= 250 lines (got $skill_lines)" "$((skill_lines <= 250))" "1"
 
 finish

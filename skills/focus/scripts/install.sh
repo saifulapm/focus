@@ -26,7 +26,7 @@ fi
 
 mkdir -p "$SKILL_DIR/scripts" "$SKILL_DIR/references" "$CMD_DIR/focus"
 cp "$SKILL_ROOT/SKILL.md" "$SKILL_DIR/SKILL.md"
-for s in check-complete.sh session-context.sh plan-tail.sh principles.sh; do
+for s in check-complete.sh session-context.sh plan-tail.sh principles.sh question-guard.sh; do
   cp "$SCRIPT_DIR/$s" "$SKILL_DIR/scripts/$s"
   chmod +x "$SKILL_DIR/scripts/$s"
 done
