@@ -1,10 +1,18 @@
 {
   "name": "focus",
   "displayName": "Focus",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "A lean harness for Claude Code: adaptive task ceremony, persistent plans, an independent evaluator gate, structured handoffs, and cross-session memory.",
-  "author": { "name": "Saiful Islam" },
+  "author": {
+    "name": "Saiful Islam"
+  },
   "repository": "https://github.com/saifulapm/focus",
   "license": "MIT",
-  "keywords": ["planning", "memory", "evaluator", "handoff", "workflow"]
+  "keywords": [
+    "planning",
+    "memory",
+    "evaluator",
+    "handoff",
+    "workflow"
+  ]
 }
